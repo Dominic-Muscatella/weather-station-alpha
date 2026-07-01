@@ -1,0 +1,132 @@
+
+  :root{
+    --bg:#0d1117; --panel:#141b24; --panel2:#1b2430; --line:#263241;
+    --ink:#e6edf3; --ink-dim:#8b98a8; --ink-faint:#5a6675;
+    --mono:'SFMono-Regular',ui-monospace,'JetBrains Mono',Menlo,Consolas,monospace;
+    --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    --clear:#3fb37f; --red:#ff4d4d; --amber:#ffb020;
+    --c-tornado:#c77dff; --c-flood:#4aa3ff; --c-wind:#39d0c8; --c-tstorm:#ffb020;
+    --c-blizzard:#7fdfff; --c-heat:#ff6b4a; --c-cold:#9ec5ff; --c-none:#5a6675;
+  }
+  @media (prefers-reduced-motion: reduce){ *{animation:none!important;transition:none!important} }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.45}
+  .wrap{max-width:1100px;margin:0 auto;padding:20px 22px 60px}
+  header{display:flex;align-items:baseline;gap:18px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:22px}
+  .brand{font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:13px}
+  .brand b{color:var(--red)}
+  nav{display:flex;gap:14px;margin-left:6px}
+  nav a{color:var(--ink-faint);text-decoration:none;font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding-bottom:2px;border-bottom:1px solid transparent}
+  nav a.on{color:var(--ink);border-bottom-color:var(--red)}
+  nav a:hover{color:var(--ink-dim)}
+  .spacer{flex:1}
+  select{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-family:var(--sans);font-size:13px}
+  .stamps{display:flex;gap:22px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--ink-dim);margin-bottom:22px}
+  .stamps .k{color:var(--ink-faint);text-transform:uppercase;letter-spacing:.06em;margin-right:7px}
+  .stamps .stale{color:var(--amber)} .stamps .bad{color:var(--red)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .card h2{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 14px;font-weight:600}
+  .empty{color:var(--ink-faint);font-family:var(--mono);padding:40px 0;text-align:center}
+  .lamps{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px}
+  @media(max-width:720px){.lamps{grid-template-columns:1fr}}
+  .lamp{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px 22px;display:flex;gap:20px;align-items:center;position:relative;overflow:hidden}
+  .bulb{width:74px;height:74px;border-radius:50%;flex:none;border:2px solid var(--line);background:radial-gradient(circle at 38% 34%, #2a3543, #11171f);position:relative}
+  .bulb.lit-red{background:radial-gradient(circle at 38% 34%,#ff8a8a,var(--red));border-color:#ff8a8a;box-shadow:0 0 26px 4px rgba(255,77,77,.55);animation:pulse 2.4s ease-in-out infinite}
+  .bulb.lit-amber{background:radial-gradient(circle at 38% 34%,#ffd27a,var(--amber));border-color:#ffd27a;box-shadow:0 0 26px 4px rgba(255,176,32,.5);animation:pulse 3s ease-in-out infinite}
+  .bulb.lit-clear{background:radial-gradient(circle at 38% 34%,#7fe3b6,var(--clear));border-color:#7fe3b6;box-shadow:0 0 18px 2px rgba(63,179,127,.4)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.62}}
+  .lamp .tier{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint)}
+  .lamp .verdict{font-size:23px;font-weight:700;margin:3px 0 4px;letter-spacing:.01em}
+  .lamp .sub{font-family:var(--mono);font-size:12.5px;color:var(--ink-dim)}
+  .lamp .sub b{color:var(--ink)}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:720px){.cols{grid-template-columns:1fr}}
+  .row{display:grid;grid-template-columns:96px 1fr 92px;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(38,50,65,.5)}
+  .row:last-child{border-bottom:none}
+  .row .name{font-size:13px;display:flex;align-items:center;gap:8px}
+  .dot{width:9px;height:9px;border-radius:50%;flex:none;display:inline-block}
+  .row.active .name{font-weight:700}
+  .bar{height:7px;border-radius:4px;background:var(--panel2);position:relative;overflow:hidden}
+  .bar > i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;display:block}
+  .bar > .ci{position:absolute;top:-2px;bottom:-2px;border-left:1px solid var(--ink-faint);border-right:1px solid var(--ink-faint);opacity:.5}
+  .val{font-family:var(--mono);font-size:12.5px;text-align:right;color:var(--ink-dim)}
+  .row.active .val{color:var(--ink)}
+  .fire{font-family:var(--mono);font-size:10px;color:var(--red);letter-spacing:.1em;margin-left:6px}
+  .quality{margin-top:22px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-family:var(--mono);font-size:12px;color:var(--ink-dim);display:flex;gap:26px;flex-wrap:wrap}
+  .quality .k{color:var(--ink-faint);text-transform:uppercase;letter-spacing:.06em;margin-right:7px}
+  .quality.warn{border-color:var(--amber)} .quality .flag{color:var(--amber)}
+  /* per-class watch/warn light panel */
+  .hpanel{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px}
+  @media(max-width:720px){.hpanel{grid-template-columns:1fr}}
+  .hrow{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .hrow .htop{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .gauge{width:30px;height:30px;border-radius:50%;flex:none;border:2px solid var(--line)}
+  .hrow .htier{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint)}
+  .hrow .hprox{font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-left:auto}
+  .lights{display:flex;flex-wrap:wrap;gap:14px}
+  .clight{display:flex;align-items:center;gap:9px}
+  .cbulb{width:26px;height:26px;border-radius:50%;flex:none;border:2px solid var(--line)}
+  .clight .cl-name{font-size:13px;font-weight:600}
+  .clight .cl-sub{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint)}
+  .hclear{font-family:var(--mono);font-size:12px;color:var(--ink-faint);padding:4px 0}
+  .chartcard{margin-bottom:16px}
+  .chartcard h3{font-size:12px;margin:0 0 8px;display:flex;align-items:center;gap:8px;font-weight:600;cursor:pointer;user-select:none}
+  .chartcard h3::before{content:"▸";color:var(--ink-faint);transition:transform .15s;font-size:10px}
+  .chartcard.open h3::before{transform:rotate(90deg)}
+  .chartrow{position:relative;display:flex;align-items:stretch}
+  .chartwrap{position:relative;height:150px;flex:1;margin-left:0;transition:margin-left .15s}
+  .chartcard.open .chartwrap{margin-left:54px}                 /* room for the slider to slide in */
+  .legend{font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-left:auto;font-weight:400}
+  /* vertical threshold slider: hidden until open, then occupies the left gutter, track
+     pinned (via JS) to the chart's plot area so handle height == line height */
+  .vslide{position:absolute;left:0;width:54px;display:none;opacity:0;transition:opacity .15s}
+  .chartcard.open .vslide{display:block;opacity:1}
+  .vslide input[type=range]{writing-mode:vertical-lr;direction:rtl;-webkit-appearance:slider-vertical;
+    appearance:slider-vertical;width:8px;height:115%;position:absolute;left:24px;top:-10px;margin:0;
+    accent-color:lightgrey;cursor:pointer}
+  .vslide input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 45px;       /* Width of the triangle */
+  height: 25px;      /* Height of the triangle */
+  background-color: #d60804;
+  cursor: pointer;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  top: 20px!;  /* Align center of track with center of triangle */
+
+}
+
+
+  .vticks{position:absolute;left:0;top:0;bottom:0;width:54px;pointer-events:none}
+  .vticks .vtick{position:absolute;left:0;transform:translateY(50%);font-family:var(--mono);
+    font-size:8px;color:var(--ink-faint);white-space:nowrap}
+  .vticks .vtick::after{content:"";position:absolute;left:34px;top:50%;width:6px;height:1px;background:var(--ink-faint)}
+  .tuner{display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+  .chartcard.open .tuner{display:block}
+  .tuner .field{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-family:var(--mono);font-size:11px}
+  .tuner .tierbtns{display:flex;gap:4px}
+  .tuner .tierbtns button{font-family:var(--mono);font-size:11px;padding:4px 9px;border-radius:6px;
+    border:1px solid var(--line);background:transparent;color:var(--ink-faint);cursor:pointer}
+  .tuner .tierbtns button.on[data-tier=watch]{border-color:var(--amber);color:var(--amber);background:rgba(255,176,32,.12)}
+  .tuner .tierbtns button.on[data-tier=advisory]{border-color:#ff8a20;color:#ff8a20;background:rgba(255,138,32,.12)}
+  .tuner .tierbtns button.on[data-tier=warn]{border-color:var(--red);color:var(--red);background:rgba(255,77,77,.12)}
+  .tuner .hzbtns button.on{border-color:var(--ink);color:var(--ink);background:rgba(255,255,255,.06)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line)}
+  th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
+  td.num{font-family:var(--mono);text-align:right;color:var(--ink-dim)}
+  .btn{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:7px 13px;font-family:var(--sans);font-size:13px;cursor:pointer}
+  .btn:hover{border-color:var(--ink-faint)}
+  .btn.danger{color:var(--red);border-color:rgba(255,77,77,.4)}
+  .btn.primary{background:#1f3a2e;border-color:var(--clear);color:#cfeede}
+  .field{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0}
+  .field label{font-size:12px;color:var(--ink-dim);min-width:130px}
+  .chips{display:flex;gap:7px;flex-wrap:wrap}
+  .chip{font-size:12px;padding:5px 10px;border:1px solid var(--line);border-radius:14px;cursor:pointer;color:var(--ink-dim);user-select:none}
+  .chip.sel{background:var(--panel2);color:var(--ink);border-color:var(--ink-faint)}
+  .note{font-size:12px;color:var(--ink-faint);font-family:var(--mono);margin-top:4px;line-height:1.5}
+  .toast{font-family:var(--mono);font-size:12px}
+  .toast.ok{color:var(--clear)} .toast.err{color:var(--red)}
+
+
+
+

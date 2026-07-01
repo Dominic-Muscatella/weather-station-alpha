@@ -1,0 +1,19 @@
+
+  <div class="cols">
+    <div class="card"><h2>Live KNN · latest window</h2><div id="knnlive"><div class="empty">—</div></div></div>
+    <div class="card"><h2>Reference set</h2><div id="refcounts"><div class="empty">—</div></div></div>
+  </div>
+  <div class="card" style="margin-top:18px">
+    <h2>Add reference · log an event that occurred</h2>
+    <div class="note">Pick the observation window whose conditions preceded the event, and the class(es) that occurred. Uses that window's logged embedding — the same vector the model predicted on. Added refs are tagged <b>manual</b> and can be removed below; the exported base set stays frozen. Select <b>none</b> to log a calm window as a negative reference (mutually exclusive with hazard classes).</div>
+    <div class="field"><label>observation window</label><select id="recpick"></select></div>
+    <div class="field"><label>class(es) that occurred</label><div class="chips" id="addchips"></div></div>
+    <div class="field"><button class="btn primary" id="addbtn">Add reference</button><span class="toast" id="addtoast"></span></div>
+  </div>
+  <div class="card" style="margin-top:18px">
+    <h2>Remove manual references</h2>
+    <div class="note">Removes the newest manually-added references of a class. The original exported references are never touched.</div>
+    <div class="field"><label>class</label><div class="chips" id="rmchips"></div></div>
+    <div class="field"><label>how many</label><select id="rmn"><option>1</option><option>3</option><option>5</option><option>10</option></select>
+      <button class="btn danger" id="rmbtn">Remove</button><span class="toast" id="rmtoast"></span></div>
+  </div>

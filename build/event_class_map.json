@@ -1,0 +1,127 @@
+{
+  "method": "sbert",
+  "n_events": 2383,
+  "n_ignored": 58,
+  "ignored_counts": {
+    "Drought": 21,
+    "Rip Current": 19,
+    "Lakeshore Flood": 10,
+    "High Surf": 3,
+    "Coastal Flood": 2,
+    "Seiche": 2,
+    "Wildfire": 1
+  },
+  "n_low_confidence_to_none": 0,
+  "mapping": [
+    {
+      "event_type": "Thunderstorm Wind",
+      "cls": "t-storm",
+      "n": 1057
+    },
+    {
+      "event_type": "Hail",
+      "cls": "t-storm",
+      "n": 417
+    },
+    {
+      "event_type": "Flood",
+      "cls": "flood",
+      "n": 200
+    },
+    {
+      "event_type": "Flash Flood",
+      "cls": "flood",
+      "n": 164
+    },
+    {
+      "event_type": "Cold/Wind Chill",
+      "cls": "severe cold",
+      "n": 83
+    },
+    {
+      "event_type": "Winter Weather",
+      "cls": "blizzard",
+      "n": 75
+    },
+    {
+      "event_type": "High Wind",
+      "cls": "wind",
+      "n": 69
+    },
+    {
+      "event_type": "Heavy Rain",
+      "cls": "flood",
+      "n": 60
+    },
+    {
+      "event_type": "Winter Storm",
+      "cls": "blizzard",
+      "n": 52
+    },
+    {
+      "event_type": "Tornado",
+      "cls": "tornado",
+      "n": 43
+    },
+    {
+      "event_type": "Lightning",
+      "cls": "t-storm",
+      "n": 41
+    },
+    {
+      "event_type": "Extreme Cold/Wind Chill",
+      "cls": "severe cold",
+      "n": 24
+    },
+    {
+      "event_type": "Heat",
+      "cls": "severe heat",
+      "n": 24
+    },
+    {
+      "event_type": "Excessive Heat",
+      "cls": "severe heat",
+      "n": 21
+    },
+    {
+      "event_type": "Heavy Snow",
+      "cls": "blizzard",
+      "n": 16
+    },
+    {
+      "event_type": "Strong Wind",
+      "cls": "wind",
+      "n": 15
+    },
+    {
+      "event_type": "Lake-Effect Snow",
+      "cls": "blizzard",
+      "n": 6
+    },
+    {
+      "event_type": "Funnel Cloud",
+      "cls": "tornado",
+      "n": 6
+    },
+    {
+      "event_type": "Ice Storm",
+      "cls": "blizzard",
+      "n": 3
+    },
+    {
+      "event_type": "Dust Storm",
+      "cls": "wind",
+      "n": 3
+    },
+    {
+      "event_type": "Blizzard",
+      "cls": "blizzard",
+      "n": 3
+    },
+    {
+      "event_type": "Sleet",
+      "cls": "blizzard",
+      "n": 1
+    }
+  ]
+}

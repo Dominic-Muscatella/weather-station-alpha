@@ -1,0 +1,16 @@
+[Unit]
+Description=Weather Predictor UI Server
+After=weather-engine.service
+
+[Service]
+Type=simple
+User=<username>
+Group=<username>
+WorkingDirectory=/home/<username>/weather_station_alpha
+ExecStart=/home/<username>/weather_station_alpha/weather_env/bin/python /home/<username>/weather_station_alpha/ui_server.py \
+  --logs-dir /mnt/DeepData --refs-csv refs.csv --thresholds thresholds.json --emb-dir . --port 8000
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

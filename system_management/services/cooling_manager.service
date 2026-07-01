@@ -1,0 +1,14 @@
+[Unit]
+Description=Cooling Fan Control Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/<username>/weather_station_alpha
+ExecStart=/home/<username>/weather_station_alpha/weather_env/bin/python /home/<username>/weather_station_alpha/cooling_control.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
