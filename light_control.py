@@ -68,66 +68,66 @@ def check_data_files_and_blink(pixels):
     older_than_29s = now_stamp > sensor1alert_time + 5.0
     if sensor1recieved_time > sensor1alert_time and all(present) and older_than_29s:
         alt_blink(pixels)
-        time.sleep(0.051) # helps prevent temporal collisions
+        time.sleep(0.051) 
         write_to_sensor_alt_lock_file(1)
-        # time.sleep(0.01) # helps prevent temporal collisions
-    # print(now_stamp, sensor1alert_time, sensor1recieved_time)
+        
+    
     sensor2recieved_time = get_file_write_time("sensor2_rcv.lock")
     sensor2alert_time = get_file_write_time("sensor2_alt.lock")
    
     present = [bool(sensor2recieved_time), bool(sensor2alert_time)]
-    # write_to_data_alt_lock_file(tPath="now.lock")
-    # now_stamp = get_file_write_time("now.lock")
+    
+    
     older_than_29s = now_stamp > sensor2alert_time + 5.0
     if sensor2recieved_time > sensor2alert_time and all(present) and older_than_29s:
         alt_blink(pixels, blinks=2)
-        time.sleep(0.051) # helps prevent temporal collisions
+        time.sleep(0.051) 
         write_to_sensor_alt_lock_file(2)
-        # time.sleep(0.01) # helps prevent temporal collisions
+        
 
     datawrite_time = get_file_write_time("data_wrt.lock")
     dataalert_time = get_file_write_time("data_alt.lock")
     present = [bool(datawrite_time), bool(dataalert_time)]
-    # write_to_data_alt_lock_file(tPath="now.lock")
-    # now_stamp = get_file_write_time("now.lock")
+    
+    
     older_than_29s = now_stamp > dataalert_time + 5.0
     
     if datawrite_time > dataalert_time and all(present) and older_than_29s:
         alt_blink(pixels, blinks=5)
-        time.sleep(0.051) # helps prevent temporal collisions
+        time.sleep(0.051) 
         write_to_data_alt_lock_file()
        
     ml_start_time = get_file_write_time("ml_str.lock")
     ml_alert_time = get_file_write_time("ml_alt.lock")
     present = [bool(ml_start_time), bool(ml_alert_time)]
-    # write_to_data_alt_lock_file(tPath="now.lock")
-    # now_stamp = get_file_write_time("now.lock")
+    
+    
     older_than_29s = now_stamp > ml_alert_time + 5.0
     if ml_start_time > ml_alert_time and all(present) and older_than_29s:
         alt_blink(pixels, blinks=16, delay=0.001, start=False)
-        time.sleep(0.051) # helps prevent temporal collisions
+        time.sleep(0.051) 
         write_to_data_alt_lock_file(tPath="ml_alt.lock")
     
     monte_done_time = get_file_write_time("monte_fin.lock")
     monte_alert_time = get_file_write_time("monte_alt.lock")
     present = [bool(monte_done_time), bool(monte_alert_time)]
-    # write_to_data_alt_lock_file(tPath="now.lock")
-    # now_stamp = get_file_write_time("now.lock")
+    
+    
     older_than_29s = now_stamp > monte_alert_time + 5.0
     if monte_done_time > monte_alert_time and all(present) and older_than_29s:
         alt_blink(pixels, blinks=8, delay=0.001, start=False)
-        time.sleep(0.051) # helps prevent temporal collisions
+        time.sleep(0.051) 
         write_to_data_alt_lock_file(tPath="monte_alt.lock")
     
     knn_done_time = get_file_write_time("knn_fin.lock")
     knn_alert_time = get_file_write_time("knn_alt.lock")
     present = [bool(knn_done_time), bool(knn_alert_time)]
-    # write_to_data_alt_lock_file(tPath="now.lock")
-    # now_stamp = get_file_write_time("now.lock")
+    
+    
     older_than_29s = now_stamp > knn_alert_time + 5.0
     if knn_done_time > knn_alert_time and all(present) and older_than_29s:
         alt_blink(pixels, blinks=16, delay=0.001, start=False)
-        time.sleep(0.051) # helps prevent temporal collisions
+        time.sleep(0.051) 
         write_to_data_alt_lock_file(tPath="knn_alt.lock")
         
 
@@ -135,15 +135,15 @@ def check_data_files_and_blink(pixels):
 LED_PIN = board.D13
 
 def knn_v1(rec: dict) -> dict | None:
-    # If "knn" key is missing, or is empty/falsy, return None
+    
     knn_data = rec.get("knn")
     if not knn_data:
         return None
         
-    # Get the very first key in the dictionary
+    
     kk = 'k60'
     
-    # Extract the nested data structure
+    
     target_node = knn_data[kk]
     
     return {
@@ -157,30 +157,30 @@ def clamp(val, minimum, maximum):
 
 
 def blended(model: dict, none_prob: float, knn: dict, W: float, meta: dict) -> list:
-    # Safely extract knn values using dict.get()
+    
     kv = knn.get("v1") if knn else None
     knn_conf = knn.get("conf") if knn else None
     
-    # Safely extract none_label from meta and check its value in kv
+    
     none_label = meta["none_label"]
     kn = kv.get(none_label, 0) if kv else 0
 
     out = []
     
     for c in meta["hazard_classes"]:
-        # model x none
+        
         rr = (model[c]["prob"] / none_prob) if none_prob > 0 else 0
         
-        # knn x none (capped at 5)
+        
         kr = 0
         if kv:
             kr = min(kv.get(c, 0) / max(kn, 0.02), 5)
             
-        # no knn -> model only
+        
         w = W if kv else 0
         br = (1 - w) * rr + w * kr
         
-        # confidence-discounted lower bound
+        
         p = model[c]["prob"]
         lo = model[c].get("lo")
         
@@ -192,7 +192,7 @@ def blended(model: dict, none_prob: float, knn: dict, W: float, meta: dict) -> l
         joint_conf = (model_conf * knn_conf) if knn_conf is not None else model_conf
         blo = br * joint_conf
         
-        # Collect metric data structure
+        
         out.append({
             "c": c,
             "prob": model[c]["prob"],
@@ -207,7 +207,7 @@ def blended(model: dict, none_prob: float, knn: dict, W: float, meta: dict) -> l
             "blo": blo
         })
         
-    # Sort descending by the 'br' score
+    
     out.sort(key=lambda x: x["br"], reverse=True)
     
     return out
@@ -220,7 +220,7 @@ def class_progress(br: float, t: dict) -> float:
     w = t["watch"]
     r = t["warn"]
     
-    # JavaScript: (t.advisory != null ? t.advisory : (t.watch + t.warn) / 2)
+    
     if t.get("advisory") is not None:
         a = t["advisory"]
     else:
@@ -244,7 +244,7 @@ def horizon_row(
     th: dict,
     knn: dict,
 ):
-    # Extract helper functions passed via a dictionary (or use global scope)
+    
 
 
     knn_conf = knn["conf"] if knn else None
@@ -255,25 +255,25 @@ def horizon_row(
     advisories = 0
     warnings = 0
     for r in blend_rows:
-        # Safely drill down into th dictionary
+        
         t_dict = th.get(r["c"])
         t = t_dict.get(horizon_key) if t_dict else None
         if not t:
             continue
 
-        # JavaScript: (t.advisory != null ? t.advisory : (t.watch + t.warn) / 2)
+        
         if t.get("advisory") is not None:
             adv = t["advisory"]
         else:
             adv = (t["watch"] + t["warn"]) / 2
 
-        # Gauge progress on the MEAN
+        
         p = class_progress(r["br"], t)
         if p > peak:
             peak = p
             headline = r
 
-        # Upper bound calculation
+        
         bup = r["br"] * (2 - r["jointConf"])
 
         if r["blo"] >= t["warn"]:
@@ -287,28 +287,28 @@ def horizon_row(
 def fetch_model_meta_thresh():
     url = "http://weather-station-alpha.local:8000/api/thresholds"
 
-    # Perform the HTTP GET call and parse the response directly
+    
     with urllib.request.urlopen(url) as response:
         thresh_data = json.load(response)
 
-    # print(thresh_data)
+    
 
 
     url = "http://weather-station-alpha.local:8000/api/latest?loc=LOCAL"
 
-    # Perform the HTTP GET call and parse the response directly
+    
     with urllib.request.urlopen(url) as response:
         model_data = json.load(response)
 
-    # print(model_data)
+    
 
     url = "http://weather-station-alpha.local:8000/api/meta"
 
-    # Perform the HTTP GET call and parse the response directly
+    
     with urllib.request.urlopen(url) as response:
         meta_data = json.load(response)
 
-    # print(meta_data)
+    
 
     return model_data, meta_data, thresh_data
 
@@ -320,19 +320,19 @@ def load_and_interpolate(file):
     new_seq = []
 
     for i in range(N):
-        # 1. Add current frame to the even position
+        
         current_frame = old_seq[i]
         new_seq.append(current_frame)
         
-        # 2. Calculate the interpolated frame for the odd position
+        
         if i < N - 1:
-        # Standard interpolation between current frame and next frame
+        
             next_frame = old_seq[i + 1]
             interp_time = (current_frame["time"] + next_frame["time"]) / 2
         else:
-            # Final slot loop: Interpolate between the LAST frame and the FIRST frame
+            
             next_frame = old_seq[0]
-            # Extrapolate the time forward so it doesn't jump backwards mid-sequence
+            
             interp_time = current_frame["time"] 
         interp_pixels = []
         for p1, p2 in zip(current_frame["pixels"], next_frame["pixels"]):
@@ -340,13 +340,13 @@ def load_and_interpolate(file):
             interp_pixels.append(rgb)
             
         interp_frame = {
-            "time": round(interp_time, 4),  # Rounded to prevent floating-point math issues
+            "time": round(interp_time, 4),  
             "pixels": interp_pixels
         }
 
         new_seq.append(interp_frame)
 
-    # Create the final matching output structure
+    
     output_data = {"sequence": new_seq}
     return output_data
 
@@ -382,15 +382,15 @@ animations = {"clear": clear_seq,
               "warning": warning_seq}
 NUM_PIXELS = 7
 
-# Color byte order (WS2812B usually uses GRB format)
+
 ORDER = neopixel.GRB
 
-# Initialize the LED strip object
+
 pixels = neopixel.NeoPixel(
     LED_PIN, 
     NUM_PIXELS, 
-    brightness=0.1,      # Global brightness control (0.0 to 1.0)
-    auto_write=True,    # Set False to buffer changes, improving speed
+    brightness=0.1,      
+    auto_write=True,    
     pixel_order=ORDER
 )
 
@@ -420,7 +420,7 @@ signal.signal(signal.SIGINT, cleanup_and_exit)
 
 
 pixels.brightness = BRIGHTNESS
-# let the system spin up first
+
 alt_blink(pixels, blinks=7, delay=0.001)
 pixels.fill((25, 0, 0))
 pixels.show()
@@ -620,8 +620,8 @@ try:
             pixels = neopixel.NeoPixel(
                 LED_PIN,
                 NUM_PIXELS,
-                brightness=0.01,      # Global brightness control (0.0 to 1.0)
-                auto_write=True,    # Set False to buffer changes, improving speed
+                brightness=0.01,      
+                auto_write=True,    
                 pixel_order=ORDER
             )
             time.sleep(0.5)
@@ -637,7 +637,7 @@ try:
             blend1=blended(model_data['model_1h'],n1,knn,W, meta_data)
             print("update fetched!")
             wch, adv, wrn = horizon_row("h1", blend1,thresh_data,knn)
-            # print(f"watches: {wch} \nadvisories: {adv}\nwarnings: {wrn}") 
+            
      
         
         is_compute = False
@@ -678,7 +678,7 @@ try:
                pixels.show()
                time.sleep(5)
 except KeyboardInterrupt:
-    # Safely shut off all LEDs when exiting with Ctrl+C
+    
     pixels.fill((0, 0, 0))
     pixels.show()
     raise KeyboardInterrupt()

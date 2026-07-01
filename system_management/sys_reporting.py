@@ -46,7 +46,7 @@ def get_file_write_time(fpath):
 def write_to_sensor_alt_lock_file(sensor):
     try:
         with open(f"sensor{sensor}_alt.lock", "w", encoding="utf-8") as file:
-            # 3. Cast the UUID object to a plain text string and write it
+            
             file.write(str(uuid.uuid4()))
     except Exception as E:
         print(E)
@@ -56,7 +56,7 @@ def write_to_sensor_alt_lock_file(sensor):
 def write_to_data_alt_lock_file(tPath="data_alt.lock"):
     try:
         with open(tPath, "w", encoding="utf-8") as file:
-            # 3. Cast the UUID object to a plain text string and write it
+            
             file.write(str(uuid.uuid4()))
     except Exception as E:
         print(E)

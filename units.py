@@ -1,28 +1,9 @@
-"""
-units.py
-========
-One place for unit conversions so TRAINING data and the LIVE feed are forced
-into the same canonical units BEFORE the z-score scaler ever sees them.
-
-Why this matters: the model learns on Kaggle historical data and, at inference,
-z-scores your live Pi/station readings with a scaler fit on that training data.
-If the two are in different units (e.g. train in hPa, live in inHg) the z-scores
-are meaningless and the model silently degrades. Converting both ends to one
-canonical unit removes that whole class of bug.
-
-Canonical internal units (what the model actually trains and predicts in):
-    temp     -> degrees Celsius (C)
-    pressure -> hectopascals    (hPa, == millibar)
-    humidity -> percent         (%, 0..100)
-
-`to_canonical(channel, values, from_unit)` works on scalars or numpy arrays.
-"""
 from __future__ import annotations
 
 CANONICAL = {"temp": "C", "pressure": "hPa", "humidity": "%"}
 
-# Each maps a source unit (lower-cased) -> a function returning the canonical value.
-_TEMP = {                       # -> C
+
+_TEMP = {                       
     "c": lambda v: v,
     "celsius": lambda v: v,
     "f": lambda v: (v - 32.0) * 5.0 / 9.0,
@@ -30,7 +11,7 @@ _TEMP = {                       # -> C
     "k": lambda v: v - 273.15,
     "kelvin": lambda v: v - 273.15,
 }
-_PRESSURE = {                   # -> hPa
+_PRESSURE = {                   
     "hpa": lambda v: v,
     "mb": lambda v: v,
     "mbar": lambda v: v,
@@ -42,7 +23,7 @@ _PRESSURE = {                   # -> hPa
     "mmhg": lambda v: v * 1.33322387415,
     "psi": lambda v: v * 68.9475729318,
 }
-_HUMIDITY = {                   # -> %
+_HUMIDITY = {                   
     "%": lambda v: v,
     "percent": lambda v: v,
     "pct": lambda v: v,
@@ -59,8 +40,7 @@ def known_units(channel: str):
 
 
 def to_canonical(channel: str, values, from_unit: str):
-    """Convert `values` (scalar or numpy array) of `channel` from `from_unit`
-    into the canonical unit for that channel."""
+
     fam = _TABLE.get(channel)
     if fam is None:
         raise KeyError(f"no conversion table for channel {channel!r}")
@@ -73,14 +53,12 @@ def to_canonical(channel: str, values, from_unit: str):
 
 
 def guess_unit(channel: str, lo: float, med: float, hi: float):
-    """Heuristic best-guess of a channel's unit from its value range. Used by
-    inspect_data.py to suggest what to put in config.TRAIN_UNITS / LIVE_UNITS.
-    Returns (guess, confident: bool)."""
+
     if channel == "temp":
-        # anchor on the median (robust to a stray sentinel in min/max)
+        
         if 230 <= med <= 330:
             return "K", True
-        if med > 45:               # median too hot for Celsius -> Fahrenheit
+        if med > 45:               
             return "F", True
         if -30 <= med <= 45:
             return "C", True

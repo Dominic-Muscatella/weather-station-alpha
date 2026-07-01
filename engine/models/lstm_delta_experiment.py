@@ -1,29 +1,3 @@
-"""
-lstm_delta_experiment.py
-========================
-Combine the two things that each helped (or were wrongly dismissed):
-  * the LSTM legs (recurrent time-collapse) — the only arch that moved the z
-    frontier; and
-  * multi-scale BACKWARD-DIFFERENCE channels (pressure tendency etc.) — which
-    looked like a wash originally, but that run was strangled by the float32
-    scaler-precision bug (pressure crushed to ~constant). With the scaler fixed,
-    corrected-pressure deltas + the recurrent bias is an open question.
-
-So this is the LSTM arch, but each leg ingests the delta-augmented channels
-(13 hourly, 10 sub-hourly) with per-channel float64-fit scaling, instead of the
-raw 3 channels. Everything else (split, z target, loss, refit, best-on-LR-drop,
-pre-LSTM pool, anchored-at-t final hidden) matches lstm_experiment so the result
-is directly comparable to the plain-LSTM scorecard.
-
-Channel layout, delta construction, causal backward-diff, and the (fixed)
-per-channel scaler are reused from delta_experiment; the recurrent leg/pool/
-final-hidden structure is reused conceptually from lstm_experiment. Standalone.
-
-Usage:
-    from lstm_delta_experiment import run_lstm_delta
-    run_lstm_delta("build/dataset_multi.npz", target_1h="z_1h", target_24h="z_24h",
-                   save_dir="model_package_lstm_delta")
-"""
 from __future__ import annotations
 from typing import Optional
 
@@ -40,10 +14,7 @@ from engine.models.lstm_experiment import LSTM_HIDDEN, LSTM_LAYERS, LSTM_SEQ_HOU
 
 
 class ConvLSTMLegDelta(nn.Module):
-    """ConvLSTMLeg that accepts a configurable input-channel count (for the delta
-    channels) and a per-leg kernel. Conv -> pool to `seq` -> LSTM -> final hidden
-    -> concat date -> FC. Same as lstm_experiment's leg but with in_ch/kernel
-    parameterized for the delta inputs."""
+
     def __init__(self, in_ch, k=C.CONV_KERNEL, widths=C.CONV_CHANNELS,
                  date_dim=C.DATE_FEAT_DIM, out_dim=C.LEG_FC,
                  lstm_hidden=LSTM_HIDDEN, lstm_layers=LSTM_LAYERS, seq=LSTM_SEQ_SUB):
@@ -66,9 +37,7 @@ class ConvLSTMLegDelta(nn.Module):
 
 
 class DualLegLSTMDelta(nn.Module):
-    """LSTM dual-leg net on delta-augmented inputs: hourly leg 13ch (kernel 5),
-    sub-hourly leg 10ch (kernel 9, wider for the fast pressure deltas). Deep
-    widths held constant; only the inputs + first conv grow + recurrent collapse."""
+
     def __init__(self, hourly_in=HOURLY_IN, sub_in=SUB_IN, sub_kernel=SUB_KERNEL,
                  n_outputs=C.N_OUTPUTS, head_fc=C.HEAD_FC, p=C.DROPOUT_P):
         super().__init__()
@@ -106,7 +75,7 @@ def train_lstm_delta(data, target, twenty_four, device=None, epochs=C.EPOCHS,
     W = (data["weight"] if twenty_four else data["weight_hour"]).astype(np.float32)
 
     sp = get_split(data)
-    mu_h, sd_h = fit_channel_scaler(Xd, sp.tr)         # float64-fixed scaler
+    mu_h, sd_h = fit_channel_scaler(Xd, sp.tr)         
     mu_s, sd_s = fit_channel_scaler(X2d, sp.tr)
     Xd = _scale(Xd, mu_h, sd_h); X2d = _scale(X2d, mu_s, sd_s)
     if verbose:
@@ -205,7 +174,7 @@ def run_lstm_delta(npz_path, target_1h="z_1h", target_24h="z_24h", device=None,
             os.makedirs(save_dir, exist_ok=True)
             torch.save(model.state_dict(),
                        os.path.join(save_dir, f"model_{'24h' if t24 else '1h'}.pt"))
-        # test probs with delta features + fixed scaler, scored on z
+        
         Xd, X2d = add_deltas(data["X"], data["X2"])
         Xd = _scale(Xd, sc["hourly_mean"], sc["hourly_std"])
         X2d = _scale(X2d, sc["sub_mean"], sc["sub_std"])

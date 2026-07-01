@@ -1,4 +1,4 @@
-"""data_pipeline.py — turns raw files into modeling arrays (synced to user copy)."""
+
 from __future__ import annotations
 import json
 import os
@@ -183,9 +183,9 @@ def load_watches(path):
         "wtype": (df[tcol].astype(str) if tcol is not None
                   else pd.Series([""] * len(df), index=df.index)),
     }).dropna(subset=["start", "end"])
-    # SPC watch TYPE -> class for the y_wide (experiment-0) labels. SVR (severe
-    # thunderstorm watch) -> t-storm AND wind, like the SV warning; TOR -> tornado.
-    # Watches are convective only (SVR/TOR), so they widen only those classes.
+    
+    
+    
     out["cls"] = out["wtype"].map(_watch_type_to_class_idx)
     print(f"[watches] {len(out)} watch intervals ({out['start'].min()} .. {out['start'].max()})")
     return out
@@ -260,7 +260,7 @@ def _idx_to_epoch_sec(idx) -> np.ndarray:
 
 
 def _vals_to_epoch_sec(vals) -> np.ndarray:
-    """Same, for a pandas .values datetime64 array (any resolution)."""
+    
     return np.asarray(vals).astype("datetime64[s]").astype("int64")
 
 
@@ -334,9 +334,9 @@ def print_terminal_histogram(weights, width=80, height=30):
 def build_dataset(weather_path=None, storm_events_path=None, watches_path=None,
                   warnings_path=None, use_sbert=True, out_path=None,
                   region=None, return_arrays=False):
-    # region (optional): dict overriding the Cook defaults for a different station.
-    #   {"cz_name_contains": "champaign", "state_contains": "illinois",
-    #    "warn_ugc_keep": ("ILC019",)}.  None -> use config (Cook County).
+    
+    
+    
     region = region or {}
     cz_name = region.get("cz_name_contains")
     state_name = region.get("state_contains")
@@ -380,7 +380,7 @@ def build_dataset(weather_path=None, storm_events_path=None, watches_path=None,
     else:
         warn_start = warn_end = np.array([], dtype=np.int64)
 
-    # z source: events UNION warnings (test-only)
+    
     zw_s, zw_e, zw_c = [], [], []
     if warnings is not None and len(warnings):
         _ws = _vals_to_epoch_sec(warnings["start"].values)
@@ -397,10 +397,10 @@ def build_dataset(weather_path=None, storm_events_path=None, watches_path=None,
     z_cls = np.concatenate([ev_cls, zw_c]) if zw_c.size else ev_cls
     print(f"[dataset] z-source: {len(ev_cls):,} events + {zw_s.size:,} warning-class rows = {z_cls.size:,} total")
 
-    # y_wide source: z-source UNION watches (experiment 0; a watch makes its
-    # class positive). Watches are SVR/TOR -> widen tornado/t-storm/wind only.
-    # Same tolerance widen as events/warnings. Trained ON in experiment 0/0.5;
-    # always scored against z (the fixed ruler), never against y_wide.
+    
+    
+    
+    
     ww_s, ww_e, ww_c = [], [], []
     if watches is not None and len(watches) and "cls" in watches:
         _wa_s = _vals_to_epoch_sec(watches["start"].values)
@@ -499,7 +499,7 @@ def build_dataset(weather_path=None, storm_events_path=None, watches_path=None,
         labels=np.array(C.ALL_LABELS), weight_hour=W1, z_1h=Z1, z_24h=Z24,
         y_wide_1h=YW1, y_wide_24h=YW24)
     if return_arrays:
-        # the multi-station pooler collects these in-memory instead of saving
+        
         return arrays
     np.savez_compressed(out_path, **arrays)
     with open(os.path.join(C.BUILD_DIR, "event_class_map.json"), "w") as f:
@@ -508,33 +508,29 @@ def build_dataset(weather_path=None, storm_events_path=None, watches_path=None,
     return out_path
 
 
-# ===========================================================================
-# Multi-station pooling (Cook + Champaign + Will/Joliet + ... )
-# ===========================================================================
-# Each station is a dict:
-#   {"name": "cook",
-#    "weather_path": ".../asos_ord.csv"  (or a WEATHER_SOURCES-style list),
-#    "region": {"cz_name_contains": "cook", "state_contains": "illinois",
-#               "warn_ugc_keep": ("ILC031",)},
-#    "storm_events_path": ".../storm_events_IL.csv"  (statewide; filtered by region),
-#    "watches_path": ".../watches.csv" or None,
-#    "warnings_path": ".../warnings_<wfo>.csv" or None}
-#
-# The TEST split is taken from ONE station only (default "cook") so the ruler is
-# identical to every prior Cook-only experiment — train/val pool all stations,
-# but we always score Cook-only z. The split is computed by TIME with a real
-# embargo gap applied across the POOLED timeline, so the same storm (same t_sec
-# in two nearby cities) can never straddle the train/test boundary (spatial-
-# leakage guard). Per-station scaling (default) z-scores each station by its own
-# train-period stats so a pattern is "anomaly vs local normal" and transfers
-# across locations; set per_station_scaling=False for one shared scaler.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 def _fit_scaler_from_windows(X_tr):
-    """Per-channel mean/std over (samples, time) of the TRAIN windows (N,L,3).
-    dtype=float64 is REQUIRED: X is float32 and N*L is ~30M, so a multi-axis
-    reduction over the strided channel-last array drops out of numpy's pairwise
-    summation into naive float32 accumulation and loses precision badly (the
-    pressure channel, ~1016, came out ~676). float64 accumulation fixes it."""
+
     mu = X_tr.mean(axis=(0, 1), dtype=np.float64)
     sd = X_tr.std(axis=(0, 1), dtype=np.float64); sd[sd == 0] = 1.0
     return mu.astype(np.float32), sd.astype(np.float32)
@@ -545,7 +541,7 @@ def build_multistation(stations, out_path=None, test_station="cook",
     out_path = out_path or os.path.join(C.BUILD_DIR, "dataset_multi.npz")
     embargo_sec = int(C.SPLIT_EMBARGO_HOURS) * 3600
 
-    # ---- build each station's raw arrays (unnormalized windows) -------------
+    
     per = []
     for si, st in enumerate(stations):
         print(f"\n========== station {si}: {st['name']} ==========")
@@ -561,22 +557,22 @@ def build_multistation(stations, out_path=None, test_station="cook",
 
     test_si = next(i for i, st in enumerate(stations) if st["name"] == test_station)
 
-    # ---- time boundaries from the TEST station's timeline (so the Cook test
-    #      window range matches prior experiments) --------------------------
+    
+    
     t_test = np.sort(per[test_si]["t_sec"])
     n = len(t_test)
-    t_tr_end = t_test[int(n * C.TRAIN_SPLIT)]                 # train/val boundary time
-    t_va_end = t_test[int(n * (C.TRAIN_SPLIT + C.VAL_SPLIT))]  # val/test boundary time
+    t_tr_end = t_test[int(n * C.TRAIN_SPLIT)]                 
+    t_va_end = t_test[int(n * (C.TRAIN_SPLIT + C.VAL_SPLIT))]  
     print(f"\n[multi] time boundaries (from {test_station}): "
           f"train< {pd.Timestamp(t_tr_end, unit='s', tz='UTC')}  "
           f"test>= {pd.Timestamp(t_va_end, unit='s', tz='UTC')}  embargo={C.SPLIT_EMBARGO_HOURS}h")
 
-    # ---- per-station scaling (optional) then pool ---------------------------
+    
     keys = ["X", "X2", "date_oh", "t_sec", "y_1h", "y_24h", "weight", "weight_hour",
             "z_1h", "z_24h", "y_wide_1h", "y_wide_24h", "station"]
-    station_scalers = {}        # name -> (mu, sd); the REAL per-station stats, kept
-                                # so live inference can normalize a single station
-                                # (the pooled npz stores an identity scaler).
+    station_scalers = {}        
+                                
+                                
     for a in per:
         if per_station_scaling:
             tr_mask = a["t_sec"] < (t_tr_end - embargo_sec)
@@ -589,9 +585,9 @@ def build_multistation(stations, out_path=None, test_station="cook",
             print(f"[multi] {a['__name']}: per-station scaler mu={np.round(mu,2)} sd={np.round(sd,2)}")
     pooled = {k: np.concatenate([a[k] for a in per], axis=0) for k in keys}
 
-    # If per-station scaling already applied, store an IDENTITY scaler so the
-    # training code's normalize() is a no-op (data is already normalized). If
-    # shared scaling, fit one scaler on the pooled TRAIN windows.
+    
+    
+    
     if per_station_scaling:
         mu_all = np.zeros(C.N_CHANNELS, np.float32); sd_all = np.ones(C.N_CHANNELS, np.float32)
     else:
@@ -600,16 +596,16 @@ def build_multistation(stations, out_path=None, test_station="cook",
     pooled["scaler_mean"] = mu_all; pooled["scaler_std"] = sd_all
     pooled["labels"] = np.array(C.ALL_LABELS)
 
-    # ---- cross-station TIME-embargo split; TEST is test_station only --------
+    
     ts = pooled["t_sec"]; stn = pooled["station"]
     tr = np.flatnonzero(ts < (t_tr_end - embargo_sec))
     va = np.flatnonzero((ts >= t_tr_end) & (ts < (t_va_end - embargo_sec)))
-    te = np.flatnonzero((ts >= t_va_end) & (stn == test_si))   # Cook-only test
+    te = np.flatnonzero((ts >= t_va_end) & (stn == test_si))   
     pooled["split_tr"] = tr.astype(np.int64)
     pooled["split_va"] = va.astype(np.int64)
     pooled["split_te"] = te.astype(np.int64)
 
-    # ---- leakage assertion: no train/test storm-time overlap across stations
+    
     if te.size and tr.size:
         assert ts[tr].max() < ts[te].min(), "TIME LEAK: a train window is at/after a test window"
         gap_h = (ts[te].min() - ts[tr].max()) / 3600.0
@@ -625,9 +621,9 @@ def build_multistation(stations, out_path=None, test_station="cook",
             print(f"          {lab:9s}: pooled-train pos rate {trz[:, j].mean():.4f} "
                   f"({int(trz[:, j].sum())} positives)")
 
-    # stash the real per-station scalers in the pooled npz for provenance, and
-    # write a standalone scaler_{name}.npz next to it so live_engine can load the
-    # target station's mean/std (the pooled scaler is identity under per-station).
+    
+    
+    
     if per_station_scaling and station_scalers:
         out_dir = os.path.dirname(out_path) or "."
         for name, (mu, sd) in station_scalers.items():
@@ -647,23 +643,23 @@ if __name__ == "__main__":
     from datetime import datetime
     from meteostat import Point, Monthly
 
-    # Coordinates for Joliet, Illinois
+    
     lat, lon = 41.525, -88.081
     joliet = Point(lat, lon)
 
-    # Retrieve data for the year (e.g., last fully recorded year)
+    
     start = datetime(2025, 1, 1)
     end = datetime(2025, 12, 31)
 
-    # Fetch monthly data and calculate the annual mean
+    
     data = Monthly(joliet, start, end)
     data_df = data.fetch()
 
-    # Calculate the mean of all monthly mean temperatures
+    
     annual_mean = data_df['tavg'].mean()
     print(f"The mean temperature for 2025 was: {annual_mean:.2f}°C")
 
-# Historical 30-year climate normals for Joliet/Chicago area
+
     monthly_humidity = {
         'Month': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
         'Rel_Humidity_Percent': [0, 0, 2, 5, 12, 33, 50, 44, 36, 10, 5, 0]
@@ -671,16 +667,16 @@ if __name__ == "__main__":
 
     df = pd.DataFrame(monthly_humidity)
 
-    # Calculate the annual mean relative humidity
+    
     annual_mean = df['Rel_Humidity_Percent'].mean()
     print(f"Annual Mean Relative Humidity: {annual_mean:.2f}%")
 
     local_df = pd.read_csv('/Users/dominic.muscatella/Downloads/weather_predictor_src/live_work/live_LOCAL.csv')
 
-    # 2. Convert string to datetime using the exact format
+    
     local_df['valid'] = pd.to_datetime(local_df['valid'], format='%Y-%m-%d %H:%M')
 
-    # 3. Filter the range (Pandas handles the time part automatically)
+    
     start_date = '2026-06-11 00:00'
     end_date = '2026-06-18 00:00'
 
@@ -688,10 +684,10 @@ if __name__ == "__main__":
     local_statistics = local_filtered_df[['tmpf', 'relh', 'pressure_hpa']].agg(['mean', 'std'])
     co9_df = pd.read_csv('/Users/dominic.muscatella/Downloads/weather_predictor_src/live_work/live_C09.csv')
 
-    # 2. Convert string to datetime using the exact format
+    
     co9_df['valid'] = pd.to_datetime(co9_df['valid'], format='%Y-%m-%d %H:%M')
 
-    # 3. Filter the range (Pandas handles the time part automatically)
+    
 
     co9_filtered_df = co9_df[co9_df['valid'].between(start_date, end_date)]
     co9_statistics = co9_filtered_df[['tmpf', 'relh', 'pressure_hpa']].agg(['mean', 'std'])
@@ -701,16 +697,16 @@ if __name__ == "__main__":
     print("co9 stats:")
     print(co9_statistics.to_string(index=False))
 
-    # if local is higher than remote, we want the scaler mean to be higher
-    # if the local is lower than the remote, we want the scaler mean to be lower
-    # same with the std deviations
-    # so local - remote = positive number if local is higher, negative number if remote is higher
+    
+    
+    
+    
     print("stat diff, local - co9")
     stat_diff = local_statistics - co9_statistics
     print(stat_diff.to_string(index=False))
 
 
-    base_Stats = {"mu":{ # collected from joliet station
+    base_Stats = {"mu":{ 
                     "tmpf":71.8278,
                     "baro":1016.6022,
                     "rel_h": 10.8397
@@ -725,12 +721,12 @@ if __name__ == "__main__":
     print(json.dumps(base_Stats, indent=4))
     print()
     base_Stats["std"]["baro"] = base_Stats["std"]["baro"] +float(stat_diff.at['std', 'pressure_hpa'])
-    # base_Stats["std"]["tmpf"] = base_Stats["std"]["tmpf"] +float(stat_diff.at['std', 'tmpf'])
-    # base_Stats["std"]["rel_h"] = base_Stats["std"]["rel_h"] +float(stat_diff.at['std', 'relh'])
+    
+    
 
     base_Stats["mu"]["baro"] = base_Stats["mu"]["baro"] +float(stat_diff.at['mean', 'pressure_hpa'])
-    # base_Stats["mu"]["tmpf"] = base_Stats["mu"]["tmpf"] +float(stat_diff.at['mean', 'tmpf'])
-    # base_Stats["mu"]["rel_h"] = base_Stats["mu"]["rel_h"] +float(stat_diff.at['mean', 'relh'])
+    
+    
     print("modified stats:")
     print(json.dumps(base_Stats, indent=4))
     print()

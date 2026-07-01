@@ -25,7 +25,7 @@ from engine.model  import DualLegConvNet, enable_mc_dropout
 
 
 def normalize(X: np.ndarray, mean: np.ndarray, std: np.ndarray) -> np.ndarray:
-    """Z-score the 3 channels. X is (..., 3)."""
+    
     return (X - mean) / std
 
 
@@ -54,21 +54,21 @@ def predict(model: DualLegConvNet,
     device = next(model.parameters()).device
     x_hourly = x_hourly.to(device); x_sub = x_sub.to(device); date_oh = date_oh.to(device)
 
-    # --- Monte-Carlo passes (dropout ON) ---
+    
     enable_mc_dropout(model)
     samples = []
     for _ in range(mc_passes):
         p = torch.sigmoid(model(x_hourly, x_sub, date_oh))
         samples.append(p.unsqueeze(0))
-    samples = torch.cat(samples, dim=0)              # (P, B, 8)
-    exceed = (samples > threshold).float().mean(dim=0)        # (B, 8)
-    mc_mean = samples.mean(dim=0)                             # (B, 8)
+    samples = torch.cat(samples, dim=0)              
+    exceed = (samples > threshold).float().mean(dim=0)        
+    mc_mean = samples.mean(dim=0)                             
     lo = torch.quantile(samples, ci[0] / 100.0, dim=0)
     hi = torch.quantile(samples, ci[1] / 100.0, dim=0)
 
-    # --- Raw pass (dropout OFF) ---
+    
     model.eval()
-    raw = torch.sigmoid(model(x_hourly, x_sub, date_oh))      # (B, 8)
+    raw = torch.sigmoid(model(x_hourly, x_sub, date_oh))      
 
     final = (mc_weight * exceed + raw_weight * raw) / (mc_weight + raw_weight)
 
@@ -83,7 +83,7 @@ def predict(model: DualLegConvNet,
 
 
 class WeatherPredictor:
-    """Loads a saved bundle and runs both horizons. Used by the API."""
+    
     def __init__(self, package_dir: str, device: str = "cpu"):
         import json, os
         self.device = torch.device(device)
@@ -101,14 +101,14 @@ class WeatherPredictor:
                                                   map_location=self.device))
 
     def _tensors(self, X, X2, date_oh, input_units=None):
-        # Convert live readings to canonical units first (if caller gave units),
-        # THEN z-score with the training scaler (which is in canonical units).
+        
+        
         if input_units:
             X = to_canonical_window(X, input_units)
             X2 = to_canonical_window(X2, input_units)
         Xn = normalize(np.asarray(X, np.float32), self.mean, self.std)
         X2n = normalize(np.asarray(X2, np.float32), self.mean, self.std)
-        if Xn.ndim == 2:   # single sample -> add batch dim
+        if Xn.ndim == 2:   
             Xn, X2n, date_oh = Xn[None], X2n[None], np.asarray(date_oh)[None]
         return (torch.tensor(Xn, dtype=torch.float32),
                 torch.tensor(X2n, dtype=torch.float32),
@@ -123,7 +123,7 @@ class WeatherPredictor:
                                  *self._tensors(X, X2, date_oh, input_units), **kw))
 
     def _fmt(self, out: dict):
-        """Reshape arrays into a list (per sample) of {label: {...}} dicts."""
+        
         B = out["final"].shape[0]
         results = []
         for b in range(B):

@@ -9,8 +9,8 @@ from flask import Flask, jsonify, request, Response
 
 import config as C
 
-RED_K = 0.15        # legacy global 1h none-relative point (seed for per-class warn)
-YELLOW_K = 0.3333   # legacy global 24h none-relative point (seed for per-class watch)
+RED_K = 0.15        
+YELLOW_K = 0.3333   
 
 BLEND_KNN_WEIGHT = 0.50
 HAZARD_CLASSES = [c for c in C.ALL_LABELS if c != C.NONE_LABEL]
@@ -18,8 +18,8 @@ HAZARD_CLASSES = [c for c in C.ALL_LABELS if c != C.NONE_LABEL]
 app = Flask(__name__)
 app.config["LOG_PATHS"] = {}
 app.config["REFS_CSV"] = None
-app.config["EMB_PATHS"] = {}        # location key -> embeddings_<station>.jsonl
-app.config["THRESH_PATH"] = None    # thresholds.json
+app.config["EMB_PATHS"] = {}        
+app.config["THRESH_PATH"] = None    
 
 
 def load_static_file(relative_path):
@@ -45,7 +45,7 @@ def load_thresholds():
         try:
             with open(p) as f:
                 saved = json.load(f)
-            for c in base:                      # merge saved over defaults
+            for c in base:                      
                 if c in saved:
                     for h in ("h1", "h24"):
                         if h in saved[c]:
@@ -175,7 +175,7 @@ def api_thresholds_set():
     row = th[cls][horizon]
     row.setdefault("advisory", round((row["watch"] + row["warn"]) / 2, 4))
     row[tier] = round(val, 4)
-    # watch and warn are free (either may be larger); advisory must stay BETWEEN them.
+    
     lo, hi = min(row["watch"], row["warn"]), max(row["watch"], row["warn"])
     row["advisory"] = min(max(row["advisory"], lo), hi)
     save_thresholds(th)
@@ -183,8 +183,7 @@ def api_thresholds_set():
 
 
 def _lookup_embedding(loc, data_latest_utc):
-    """Most-recent embedding for (station-of-loc, data_latest_utc) from that
-    location's JSONL embedding store; None if absent."""
+
     emb_path = app.config["EMB_PATHS"].get(loc)
     if not emb_path or not os.path.exists(emb_path):
         return None
@@ -228,7 +227,7 @@ def api_knn_records():
         return jsonify([])
     recs = _read_log(app.config["LOG_PATHS"][loc])
     emb_path = app.config["EMB_PATHS"].get(loc)
-    # which data_latest_utc keys have an embedding stored (so they can become refs)
+    
     have = set()
     if emb_path and os.path.exists(emb_path):
         with open(emb_path) as f:
@@ -239,7 +238,7 @@ def api_knn_records():
                     pass
     out = [{"idx": i, "data_latest_utc": r.get("data_latest_utc"),
             "has_emb": r.get("data_latest_utc") in have} for i, r in enumerate(recs)]
-    return jsonify(out[::-1])           # newest first
+    return jsonify(out[::-1])           
 
 
 @app.route("/api/knn/add", methods=["POST"])
@@ -267,7 +266,7 @@ def api_knn_add():
     if not header:
         header = [f"emb_{i}" for i in range(len(emb))] + ["class"] + \
                  [f"prior_{c}" for c in range(len(labels))] + ["added_utc", "source"]
-    for extra in ("added_utc", "source"):     # ensure provenance cols exist
+    for extra in ("added_utc", "source"):     
         if extra not in header:
             header = header + [extra]
     priors = {f"prior_{c}": (rows[0].get(f"prior_{c}", "") if rows else "")
@@ -304,7 +303,7 @@ def api_knn_remove():
         if removed >= n:
             break
         row = rows[i]
-        if row.get("source") != "manual":     # never touch the frozen base set
+        if row.get("source") != "manual":     
             continue
         try:
             ci = int(float(row.get("class", -1)))
@@ -379,7 +378,7 @@ def main():
     app.config["LOG_PATHS"] = {_location_key(p): p for p in paths}
     app.config["REFS_CSV"] = args.refs_csv
     app.config["THRESH_PATH"] = args.thresholds
-    # map each location to its embedding store (embeddings_<station>.jsonl)
+    
     emb = {}
     for k in app.config["LOG_PATHS"]:
         cand = os.path.join(args.emb_dir, f"embeddings_{k}.jsonl")

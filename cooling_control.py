@@ -18,22 +18,22 @@ def set_pin(pin, value):
 
 
 def turn_off_high_cooling():
-    # fan1 on 3.3 v
-    # fan2 off
+    
+    
     set_pin(FAN1_SPEED_PIN, 0)
     set_pin(FAN2_POWER_PIN, 0)
 
 
 def turn_on_high_cooling():
-    # fan1 on 3.3 v
-    # fan2 on 5v
+    
+    
     set_pin(FAN1_SPEED_PIN, 0)
     set_pin(FAN2_POWER_PIN, 1)
 
 
 def turn_on_ultra_high_cooling():
-    # fan1 on 5v
-    # fan2 on 5v
+    
+    
     set_pin(FAN1_SPEED_PIN, 1)
     set_pin(FAN2_POWER_PIN, 1)
 

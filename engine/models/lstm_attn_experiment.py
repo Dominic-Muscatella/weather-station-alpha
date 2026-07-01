@@ -11,13 +11,12 @@ from engine.inference import normalize
 from train import get_split, focal_loss, pick_device, _batches
 from engine.models.lstm_experiment import LSTM_HIDDEN, LSTM_LAYERS, LSTM_SEQ_HOURLY, LSTM_SEQ_SUB
 
-DATE_FUZZ_PROB = 0.30        # train-only: fraction of windows whose month one-hot
-                             # is circularly rolled by +/-1
+DATE_FUZZ_PROB = 0.30        
+                             
 
 
 def fuzz_month_onehot(doh_batch: np.ndarray, rng, prob=DATE_FUZZ_PROB):
-    """Circularly roll the 12-member month one-hot +/-1 for ~`prob` of rows.
-    Dec(11)<->Jan(0) wraps. Operates on a COPY; train-only. doh_batch: (B, 12)."""
+
     out = doh_batch.copy()
     n = len(out)
     pick = rng.random(n) < prob
@@ -26,14 +25,12 @@ def fuzz_month_onehot(doh_batch: np.ndarray, rng, prob=DATE_FUZZ_PROB):
     shifts = rng.choice((-1, 1), size=pick.sum())
     rows = np.flatnonzero(pick)
     for r, s in zip(rows, shifts):
-        out[r] = np.roll(out[r], s)        # circular: roll wraps Dec<->Jan
+        out[r] = np.roll(out[r], s)        
     return out
 
 
 class ConvAttnLSTMLeg(nn.Module):
-    """Conv stack -> pool to `seq` -> LSTM over the sequence. Then either take the
-    final hidden state (attention off) OR an attention-weighted average over all
-    LSTM step-outputs (attention on). -> concat date -> FC."""
+
     def __init__(self, in_ch=C.N_CHANNELS, widths=C.CONV_CHANNELS, k=C.CONV_KERNEL,
                  date_dim=C.DATE_FEAT_DIM, out_dim=C.LEG_FC, lstm_hidden=LSTM_HIDDEN,
                  lstm_layers=LSTM_LAYERS, seq=LSTM_SEQ_SUB, use_attention=False):
@@ -45,7 +42,7 @@ class ConvAttnLSTMLeg(nn.Module):
         self.lstm = nn.LSTM(widths[-1], lstm_hidden, num_layers=lstm_layers, batch_first=True)
         self.use_attention = use_attention
         if use_attention:
-            # additive attention: score each step's output, softmax, weighted sum.
+            
             self.attn = nn.Linear(lstm_hidden, 1)
         self.fc = nn.Sequential(nn.Linear(lstm_hidden + date_dim, out_dim), nn.ReLU(inplace=True))
 
@@ -53,14 +50,14 @@ class ConvAttnLSTMLeg(nn.Module):
         x = series.transpose(1, 2)
         x = self.convs(x)
         x = self.pool(x)
-        x = x.transpose(1, 2)               # (B, seq, W)
-        outs, (h, _) = self.lstm(x)         # outs: (B, seq, hidden); h: (layers,B,hidden)
+        x = x.transpose(1, 2)               
+        outs, (h, _) = self.lstm(x)         
         if self.use_attention:
-            scores = self.attn(outs).squeeze(-1)        # (B, seq)
-            wts = torch.softmax(scores, dim=1).unsqueeze(-1)  # (B, seq, 1)
-            ctx = (outs * wts).sum(dim=1)               # (B, hidden): attention pool
+            scores = self.attn(outs).squeeze(-1)        
+            wts = torch.softmax(scores, dim=1).unsqueeze(-1)  
+            ctx = (outs * wts).sum(dim=1)               
         else:
-            ctx = h[-1]                                 # final hidden, anchored at t
+            ctx = h[-1]                                 
         return self.fc(torch.cat([ctx, date_oh], dim=1))
 
 
@@ -123,8 +120,8 @@ def train_lstm_attn(data, target, twenty_four, device=None, epochs=C.EPOCHS,
         for bi in _batches(len(idx), C.BATCH_SIZE, shuffle=train, rng=rng):
             sel = torch.as_tensor(idx[bi], dtype=torch.long, device=device)
             xb = tX[sel]; x2b = tX2[sel]; yb = tY[sel]; wb = tW[sel]
-            # DATE FUZZING: train-only, fresh random roll each batch. Off for
-            # val/test so the measurement sees true months.
+            
+            
             if train and use_date_fuzz:
                 doh_np = tD[sel].cpu().numpy()
                 doh_np = fuzz_month_onehot(doh_np, fuzz_rng)

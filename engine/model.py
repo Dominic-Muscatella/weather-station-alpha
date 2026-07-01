@@ -46,8 +46,7 @@ def _conv_block(cin, cout, k):
 
 
 class ConvLeg(nn.Module):
-    """1-D conv stack over a (B, C_in, L) series, then global avg+max pool,
-    concatenated with the date one-hot, then a small FC."""
+
     def __init__(self, in_ch=C.N_CHANNELS, widths=C.CONV_CHANNELS, k=C.CONV_KERNEL,
                  date_dim=C.DATE_FEAT_DIM, out_dim=C.LEG_FC):
         super().__init__()
@@ -56,45 +55,44 @@ class ConvLeg(nn.Module):
                                      for i in range(len(widths))])
         self.gap = nn.AdaptiveAvgPool1d(1)
         self.gmp = nn.AdaptiveMaxPool1d(1)
-        pooled = widths[-1] * 2                      # avg + max
+        pooled = widths[-1] * 2                      
         self.fc = nn.Sequential(
             nn.Linear(pooled + date_dim, out_dim),
             nn.ReLU(inplace=True),
         )
 
     def forward(self, series, date_oh):
-        # series: (B, L, C) -> (B, C, L)
+        
         x = series.transpose(1, 2)
         x = self.convs(x)
         x = torch.cat([self.gap(x).squeeze(-1), self.gmp(x).squeeze(-1)], dim=1)
-        x = torch.cat([x, date_oh], dim=1)           # the leg "takes in the date"
+        x = torch.cat([x, date_oh], dim=1)           
         return self.fc(x)
 
 
 class DualLegConvNet(nn.Module):
     def __init__(self, n_outputs=C.N_OUTPUTS, head_fc=C.HEAD_FC, p=C.DROPOUT_P):
         super().__init__()
-        self.leg_hourly = ConvLeg()                  # 7-day hourly
-        self.leg_sub = ConvLeg()                     # 48-h 15-min
+        self.leg_hourly = ConvLeg()                  
+        self.leg_sub = ConvLeg()                     
         merged = C.LEG_FC * 2
         layers = []
         dims = [merged] + list(head_fc)
         for i in range(len(head_fc)):
             layers += [nn.Linear(dims[i], dims[i + 1]),
                        nn.ReLU(inplace=True),
-                       nn.Dropout(p)]                 # <-- MC-dropout layers
+                       nn.Dropout(p)]                 
         layers += [nn.Linear(dims[-1], n_outputs)]
         self.head = nn.Sequential(*layers)
 
     def forward(self, x_hourly, x_sub, date_oh):
         a = self.leg_hourly(x_hourly, date_oh)
         b = self.leg_sub(x_sub, date_oh)
-        return self.head(torch.cat([a, b], dim=1))   # logits (B, 8)
+        return self.head(torch.cat([a, b], dim=1))   
 
 
 def enable_mc_dropout(model: nn.Module):
-    """Eval mode everywhere (BatchNorm uses running stats) EXCEPT dropout, which
-    stays active so each forward pass is a different MC sample."""
+
     model.eval()
     for m in model.modules():
         if isinstance(m, nn.Dropout):
