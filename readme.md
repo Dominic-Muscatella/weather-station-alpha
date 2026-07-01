@@ -30,11 +30,16 @@ Current Severe Weather Predictions <br>Overview Page
 
 ### Overview
 
-This project has 3 main basic parts:
-1: Logging the sensor data from the USB barometer, and the remote sensors, writing them to csv
-2: A pair of machine learning model ensembles trained on historical  weather, watch, and warning data. One trained to look 1h into the future, the other trained to look 24h ahead into the future. Both feature a KNN component, for real-time learning without retraining the underlying neural net.
+This project has 4 main basic parts:
+
+* 1: Logging the sensor data from the USB barometer, and the remote sensors, writing them to csv
+
+* 2: A pair of machine learning model ensembles trained on historical  weather, watch, and warning data. One trained to look 1h into the future, the other trained to look 24h ahead into the future. Both feature a KNN component, for real-time learning without retraining the underlying neural net.
 These models are run against the locally gathered data once every 30 minutes. 
-3: A web server and UI for adjusting warning thresholds, administering the sample for real time learning, viewing the collected data, and viewing the output of the severe weather models
+
+* 3: A web server and UI for adjusting warning thresholds, administering the sample for real time learning, viewing the collected data, and viewing the output of the severe weather models
+
+* 4: system and hardware controls for active cooling and lights
 
 ### Parts List
 ##### Compute:
@@ -42,7 +47,10 @@ These models are run against the locally gathered data once every 30 minutes.
 * 120v AC ->5v 3a DC power supply for micro usb
 * 32 Gb microSD card
 * 128 Gb USB flash drive
-* 3" USB cooling fan: 5v .2A
+* 2x 1.5" USB cooling fan: 5v 0.162A
+* **Electronics Salon** relay shield for raspberry p1 model 8541715736
+
+
 ##### Sensors and IO:
 * **Obet** Digital Weather Station
     * *Base unit model*: B66
@@ -51,6 +59,8 @@ These models are run against the locally gathered data once every 30 minutes.
     * *ASIN* B0CYJGZS8H
 * **Nooelec** RTL-SDR NESDR Smart - v5 Bundle 
     * *MODEL NUMBER* 100700 
+* ws2812b 7led disk module
+* silicone flashlight diffuser
 ##### Fancy Enclosure
 * **ZulKit** Blue Metal Project Box
     * *7.9"x6.5"x3.5"*
@@ -77,7 +87,13 @@ First, flash the microSD with Ubuntu Server 22.04 (lts).
 
 Make sure your username is set, and that the wifi and ssh are enabled.
 
-Plug in the microSD, the USB flash drive, the USB Baro, the USB SDR, and the cooling fan. 
+Plug in the microSD, the USB flash drive, the USB Baro, and the USB SDR.
+
+add the relay shield, and connect 5v to NO2 and NO1, and connect 3.3v to NC1. wire the cooling fans to ground, and put fan1's positive lead on relay 1's common, and put fan2's positive lead on relay 2's common. 
+
+finally, wire the ws2812b chip to 5v, gnd, and connect it's data contact to pin D13 on the board. (we need to use a PWM pin for this)
+
+**double check all your connections. we're at the edge of what the power supply can support, and loose connections will cause the the device to undervolt!**
 
 Power on the pi and WAIT for cloud-init to complete. this only happens on the first boot, but can take a long time. 
 
@@ -177,83 +193,39 @@ Create the service configuration file:
 ```bash
 sudo nano /etc/systemd/system/weather-sensors.service
 ```
-and put this text in it, putting your user name in the proper place:
-```ini
-[Unit]
-Description=Weather Sensor Reader and Writer
-After=network.target
+copy the corresponding file from ```/home/<username>/weather-station-alpha/system_management/services```
+make sure to change <username> to your username.
 
-[Service]
-Type=simple
-User=<username>
-Group=<username>
-WorkingDirectory=/home/<username>/weather_station_alpha
-ExecStart=/home/<username>/weather_station_alpha/weather_env/bin/python /home/<username>>/weather_station_alpha/sensor_reader_writer.py
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-
-
-```
 ### Setting Up  The Machine Learning Service
 Create the engine configuration file:
 ```bash
 sudo nano /etc/systemd/system/weather-engine.service
 ```
-Paste the following block:
-```ini
-[Unit]
-Description=Weather Predictor ML Live Engine
-After=weather-sensors.service
+copy the corresponding file from ```/home/<username>/weather-station-alpha/system_management/services```
+make sure to change <username> to your username.
 
-[Service]
-Type=simple
-User=<username>
-Group=<username>
-WorkingDirectory=/home/<username>/weather_predictor_src
-ExecStart=/home/<username>/weather_station_alpha/weather_env/bin/python /home/<username>/weather_station_alpha/live_engine.py \
-  --arch lstm_attn --model model_package_lstm_attn \
-  --scaler-npz build/scaler_LOCAL.npz --knn-csv refs.csv \
-  --station LOCAL --location "<username>'s House" --warn-wfo LOT --warn-ugc ILC197 \
-  --out /mnt/DeepData/live_log_LOCAL.json --interval-min 15
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-
-
-```
-
-### Setting Up  The UI Service
+### Setting Up The UI Service
 ```bash
 sudo nano /etc/systemd/system/weather-ui.service
 ```
-Paste the following block:
-```ini
-[Unit]
-Description=Weather Predictor UI Server
-After=weather-engine.service
+copy the corresponding file from ```/home/<username>/weather-station-alpha/system_management/services```
+make sure to change <username> to your username.
 
-[Service]
-Type=simple
-User=<username>
-Group=<username>
-WorkingDirectory=/home/<username>/weather_predictor_src
-ExecStart=/home/<username>/weather_station_alpha/weather_env/bin/python /home/<username>/weather_station_alpha/ui_server.py \
-  --logs-dir /mnt/DeepData --refs-csv refs.csv --thresholds thresholds.json --emb-dir . --port 8000
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-
-
-
+### Setting Up The Cooling Fan service
+```bash
+sudo nano /etc/systemd/system/cooling_manager.service
 ```
-### Enabling the Weather Services on Boot
+copy the corresponding file from ```/home/<username>/weather-station-alpha/system_management/services```
+make sure to change <username> to your username.
+
+### Setting Up The Light Control Service
+```bash
+sudo nano /etc/systemd/system/light_manager.service
+```
+copy the corresponding file from ```/home/<username>/weather-station-alpha/system_management/services```
+make sure to change <username> to your username.
+
+### Enabling the Services on Boot
 Finally, we need to tell the daemon about the new services, and bind them to run whenever the kernel boots.
 
 ```bash
@@ -262,10 +234,14 @@ sudo systemctl daemon-reload
 sudo systemctl enable weather-sensors.service
 sudo systemctl enable weather-engine.service
 sudo systemctl enable weather-ui.service
+sudo systemctl enable light_manager.service
+sudo systemctl enable 
 
 sudo systemctl start weather-sensors.service
 sudo systemctl start weather-engine.service
 sudo systemctl start weather-ui.service
+sudo systemctl start light_manager.service
+sudo systemctl start cooling_manager.service
 ```
 #### helpful for debugging:
 to read the live logs of the services:
@@ -273,12 +249,16 @@ to read the live logs of the services:
   sudo journalctl -u weather-sensors.service -f
   sudo journalctl -u weather-engine.service -f
   sudo journalctl -u weather-ui.service -f
+  sudo journalctl -u light_manager.service -f
+  sudo journalctl -u cooling_manager.service -f
   ```
 to stop the services if you ever need to:
 ```bash
 sudo systemctl stop weather-sensors.service
 sudo systemctl stop weather-engine.service
 sudo systemctl stop weather-ui.service
+sudo systemctl stop light_manager.service
+sudo systemctl stop cooling_manager.service
 ```
 and to restart them instead of stopping them completely:
 to stop the services (only on an error):
@@ -286,6 +266,8 @@ to stop the services (only on an error):
 sudo systemctl restart weather-sensors.service
 sudo systemctl restart weather-engine.service
 sudo systemctl restart weather-ui.service
+sudo systemctl restart light_manager.service
+sudo systemctl restart cooling_manager.service
 ```
 ## How It All Works
 
@@ -294,7 +276,31 @@ The Raspberry Pi Runs Ubuntu Server.
 The functions are broken into 3 services, which systemctl manages: the Weather Sensors service, the Weather Engine service, and the Weather UI service.
 
 The Weather Sensors service gathers temperature and humidity from our outside sensors from over the radio, as well as gathering the local pressure from an on-board barometer. It saves this data every 5 minutes.
-The Weather Engine service runs the machine learning models on the local data every 30 minutes, and the Weather UI service hosts the API and front end for the data UI.
+
+The Weather Engine service runs the machine learning models on the local data every 15 minutes, and the Weather UI service hosts the API and front end for the data UI.
+
+The Light Manager service will operate the ws2812b chip. it will play a startup animation, and a shut down animation. 
+
+During operation, it will show different animations for the following cases:
+all clear (no watches or warnings)
+watch (one or more watches active)
+advisory (one or more advisories active)
+warning (one or more warnings active)
+compute (cpu compute is over 30%)
+
+It will also 'blink':
+once (when recieving data from sensor 1)
+twice (when recieving data from sensor 2)
+5 times (when saving sensor data to the csv)
+
+25 times, quickly (when the ml models have started, and completed)
+
+
+The Cooling Manager service will operate the cooling fans in 3 modes, based on cpu usage:
+default      -  low  (fan1 @ 3.3v, fan2 off)
+cpu over 75% -  med  (fan1 @ 3.3v, fan2 @ 5v)
+cpu over 90% -  high (fan1 @ 5v, fan2 @5v)
+
 
 
 ### The  Weather Sensors Service
