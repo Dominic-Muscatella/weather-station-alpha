@@ -283,18 +283,18 @@ The Light Manager service will operate the ws2812b chip. it will play a startup 
 
 During operation, it will show different animations for the following cases:
 <br>
-all clear (no watches or warnings)
+all clear (no watches or warnings)<br>
 <img src="./images/clear_light.gif" width="200px" style="border-radius: 15px;" alt="local sensor data log">
 <br>
-watch (one or more watches active)
+watch (one or more watches active)<br>
 <img src="./images/watch_light.gif" width="200px" style="border-radius: 15px;" alt="local sensor data log">
 <br>
-advisory (one or more advisories active)
+advisory (one or more advisories active)<br>
 <img src="./images/advisory_light.gif" width="200px" style="border-radius: 15px;" alt="local sensor data log">
 <br>
-warning (one or more warnings active)
+warning (one or more warnings active)<br>
 <img src="./images/warning_light.gif" width="200px" style="border-radius: 15px;" alt="local sensor data log"><br>
-compute (cpu compute is over 30%)
+compute (cpu compute is over 30%)<br>
 <img src="./images/compute_running_light.gif" width="200px" style="border-radius: 15px;" alt="local sensor data log">
 <br>
 
