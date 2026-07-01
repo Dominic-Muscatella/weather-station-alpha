@@ -83,16 +83,22 @@
   .chartcard.open .vslide{display:block;opacity:1}
   .vslide input[type=range]{writing-mode:vertical-lr;direction:rtl;-webkit-appearance:slider-vertical;
     appearance:slider-vertical;width:8px;height:115%;position:absolute;left:24px;top:-10px;margin:0;
-    accent-color:lightgrey;cursor:pointer}
+    accent-color:var(--thumb, lightgrey);cursor:pointer}
   .vslide input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 45px;       /* Width of the triangle */
   height: 25px;      /* Height of the triangle */
-  background-color: #d60804;
+  background-color: var(--thumb, #d60804);   /* matches the class line (set per-card in JS) */
   cursor: pointer;
   clip-path: polygon(0 0, 100% 50%, 0 100%);
   top: 20px!;  /* Align center of track with center of triangle */
 
+}
+  /* Firefox uses a different pseudo-element; keep it in sync */
+  .vslide input[type=range]::-moz-range-thumb {
+  width: 45px; height: 25px; border: none;
+  background-color: var(--thumb, #d60804);
+  clip-path: polygon(0 0, 100% 50%, 0 100%); cursor: pointer;
 }
 
 

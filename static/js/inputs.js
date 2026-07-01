@@ -1,6 +1,28 @@
 function tsms(iso){return new Date(iso).getTime();}
 function xtick(v){const d=new Date(v);return (d.getUTCMonth()+1)+"/"+d.getUTCDate()+" "+String(d.getUTCHours()).padStart(2,"0")+"Z";}
 
+// ---- week-window state (mirror of performance.js) -----------------------
+// WITHOBS holds the full observation history; buildCharts() reads windowedObs():
+//   mode "all"  -> every observation (original behavior)
+//   mode "week" -> a 7-day slice ending at VIEW.end (slider-chosen), x-axis pinned.
+const WEEK_MS = 7*24*3600*1000;
+const VIEW = { mode:"all", end:null };
+let WITHOBS = [];
+function recTs(r){ return tsms(r.data_latest_utc); }
+function windowedObs(){
+  if(VIEW.mode!=="week" || !WITHOBS.length) return WITHOBS;
+  const end = VIEW.end!=null ? VIEW.end : recTs(WITHOBS[WITHOBS.length-1]);
+  const start = end - WEEK_MS;
+  return WITHOBS.filter(r=>{ const x=recTs(r); return x>=start && x<=end; });
+}
+function windowSpan(){
+  if(VIEW.mode!=="week" || !WITHOBS.length) return null;
+  const end = VIEW.end!=null ? VIEW.end : recTs(WITHOBS[WITHOBS.length-1]);
+  // +1h of right-headroom: drawProjection() extends the trend to t0+1h, and t0 is the
+  // window's right edge; without this the projection lands past max and gets clipped.
+  return { min:end-WEEK_MS, max:end + 3600*1000 };
+}
+
 const CH=[
   {k:"temp",label:"Temperature",unit:"°C",hue:"#ff6b4a",ribbonHue:"rgba(255,107,74,0.3)"},
   {k:"pressure",label:"Pressure",unit:"hPa",hue:"#4aa3ff",ribbonHue:"rgba(74,163,255,0.3)"},
@@ -11,16 +33,27 @@ async function load(key){
   const recs=await(await fetch("/api/history?loc="+encodeURIComponent(key))).json();
   const host=document.getElementById("charts");
   if(!recs.length){host.innerHTML="<div class='empty'>No history yet.</div>";return;}
-  const withObs=recs.filter(r=>r.obs_latest);
+  WITHOBS=recs.filter(r=>r.obs_latest);
   const last=recs[recs.length-1];
   
   document.getElementById("stamps").innerHTML= `
     <div><span class="k">now</span>${utc(new Date().toISOString())}</div>
     <div><span class="k">latest data</span>${utc(last.data_latest_utc)} (${fmtAge(last.data_latest_utc)})</div>
-    <div><span class="k">observations</span>${withObs.length}</div>`;
+    <div><span class="k">observations</span>${WITHOBS.length}</div>`;
     
-  if(!withObs.length){host.innerHTML="<div class='empty'>No observations logged yet.</div>";return;}
-  
+  if(!WITHOBS.length){host.innerHTML="<div class='empty'>No observations logged yet.</div>";return;}
+
+  VIEW.mode="all"; VIEW.end=null;    // reset window on (re)load
+  buildCharts();
+  wireWindow();
+}
+
+// build one line+projection chart per channel over the current window slice.
+function buildCharts(){
+  const host=document.getElementById("charts");
+  const withObs=windowedObs();
+  if(!withObs.length){host.innerHTML="<div class='empty'>No observations in this week. Slide toward newer data.</div>";return;}
+  const span=windowSpan();
   const t=withObs.map(r=>tsms(r.data_latest_utc));
   host.innerHTML="";
   
@@ -136,7 +169,7 @@ chart.data.datasets[3].data = [
         animation:false,
         spanGaps:true,
         scales:{
-          x:{type:"linear",ticks:{color:"#5a6675",font:{size:5},maxTicksLimit:20,callback:xtick},grid:{color:"rgba(38,50,65,.8)"}},
+          x:{type:"linear",min:(span?span.min:undefined),max:(span?span.max:undefined),ticks:{color:"#5a6675",font:{size:5},maxTicksLimit:20,callback:xtick},grid:{color:"rgba(38,50,65,.8)"}},
           y:{ticks:{color:"#5a6675",font:{size:5}},grid:{color:"rgba(38,50,65,.8)"}}
         },
         plugins:{
@@ -170,6 +203,41 @@ chart.data.datasets[3].data = [
     }, 50);
 
   });
+}
+
+// ---- week-window controls (mirror of performance.js) --------------------
+function wireWindow(){
+  const bar=document.getElementById("winbar");
+  const bAll=document.getElementById("win-all"), bWeek=document.getElementById("win-week");
+  const ctrls=document.getElementById("win-ctrls"), slider=document.getElementById("win-slider");
+  const label=document.getElementById("win-label"), bLatest=document.getElementById("win-latest");
+  if(!bar) return;
+  bar.style.display = WITHOBS.length ? "flex" : "none";
+
+  function fmtRange(end){
+    const s=new Date(end-WEEK_MS), e=new Date(end);
+    const d=t=>(t.getUTCMonth()+1)+"/"+t.getUTCDate();
+    return d(s)+" → "+d(e)+" (week ending "+xtick(end)+")";
+  }
+  function refreshLabel(){
+    label.textContent = VIEW.mode==="week" && VIEW.end!=null ? fmtRange(VIEW.end) : "";
+  }
+  function setMode(mode){
+    VIEW.mode=mode;
+    bAll.classList.toggle("on", mode==="all");
+    bWeek.classList.toggle("on", mode==="week");
+    ctrls.style.display = mode==="week" ? "flex" : "none";
+    if(mode==="week"){
+      slider.min=0; slider.max=Math.max(0,WITHOBS.length-1);
+      if(VIEW.end==null) slider.value=slider.max;         // default: newest week
+      VIEW.end = recTs(WITHOBS[Math.round(+slider.value)]);
+    }
+    refreshLabel(); buildCharts();
+  }
+  bAll.onclick   = ()=>setMode("all");
+  bWeek.onclick  = ()=>setMode("week");
+  bLatest.onclick= ()=>{ slider.value=slider.max; VIEW.end=recTs(WITHOBS[WITHOBS.length-1]); refreshLabel(); buildCharts(); };
+  slider.oninput = ()=>{ VIEW.end=recTs(WITHOBS[Math.round(+slider.value)]); refreshLabel(); buildCharts(); };
 }
 
 (async()=>{

@@ -1,2 +1,12 @@
   <div class="stamps" id="stamps"></div>
+  <div class="winbar" id="winbar" style="display:none;align-items:center;gap:14px;margin-bottom:12px;flex-wrap:wrap">
+    <span class="hzbtns tierbtns">
+      <button id="win-all" class="on">all history</button><button id="win-week">1-week window</button>
+    </span>
+    <span id="win-ctrls" style="display:none;align-items:center;gap:10px;flex:1;min-width:240px">
+      <input type="range" id="win-slider" min="0" max="0" step="1" value="0" style="flex:1;accent-color:#4aa3ff;cursor:pointer">
+      <b id="win-label" style="font-family:var(--mono);white-space:nowrap;color:#9db4d0">—</b>
+      <button id="win-latest">latest ⏭</button>
+    </span>
+  </div>
   <div id="charts"><div class="empty">Loading sensor history…</div></div>

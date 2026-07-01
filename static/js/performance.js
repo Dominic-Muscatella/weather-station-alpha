@@ -24,6 +24,32 @@ function lineCfg(label,pts,hue,dash,w,alpha){return {label,data:pts,borderColor:
 const YMAX_BASE=3, YMAX_CAP=5;           // x-none axis: default 3x, auto-extend to 5x
 let CHARTS={}, RECS=[], TH=null;
 
+// ---- week-window state --------------------------------------------------
+// RECS holds the full history (unchanged). VIEW picks what rebuildCharts reads:
+//  mode "all"  -> every record (the original behavior)
+//  mode "week" -> a 7-day slice ending at WIN.end, chosen by the slider.
+// When windowed we also pin the x-axis to [start,end] so the week fills the
+// width instead of being squished at the right edge (the whole point: no squint).
+const WEEK_MS = 7*24*3600*1000;
+const VIEW = { mode:"all", end:null };   // end = ms timestamp of the window's right edge
+
+function recTs(r){ return tsms(r.data_latest_utc); }
+
+// records whose timestamp falls in the active window (or all of them in "all" mode)
+function windowedRecs(){
+  if(VIEW.mode!=="week" || !RECS.length) return RECS;
+  const end = VIEW.end!=null ? VIEW.end : recTs(RECS[RECS.length-1]);
+  const start = end - WEEK_MS;
+  return RECS.filter(r=>{ const x=recTs(r); return x>=start && x<=end; });
+}
+// the [min,max] the x-axis should span for the current view (null -> auto)
+function windowSpan(){
+  if(VIEW.mode!=="week" || !RECS.length) return null;
+  const end = VIEW.end!=null ? VIEW.end : recTs(RECS[RECS.length-1]);
+  return { min:end-WEEK_MS, max:end };
+}
+
+
 // blended none-relative ratio for one class at one record (matches the home page)
 function blendRatio(rec,cls,horizon,W){
   const model=horizon==="h1"?rec.model_1h:rec.model_24h; if(!model||!model[cls])return null;
@@ -49,15 +75,17 @@ function blendLower(rec,cls,horizon,W){
 
 function rebuildCharts(){
   const host=document.getElementById("charts"); const W=META.blend_knn_weight;
-  const t=RECS.map(r=>tsms(r.data_latest_utc));
+  const recs=windowedRecs();
+  const t=recs.map(r=>tsms(r.data_latest_utc));
   host.innerHTML=""; CHARTS={};
+  if(!recs.length){host.innerHTML="<div class=" + chr(39) + "empty" + chr(39) + ">No records in this week. Slide toward newer data.</div>";return;}
   META.classes.forEach(cls=>{
     const hue=CLASS_HUE[cls]||"#8b98a8";
-    const blend1=RECS.map((r,i)=>({x:t[i],y:blendRatio(r,cls,"h1",W)}));
-    const knn=RECS.map((r,i)=>{let y=null;if(r.knn){const kk=r.knn["k15"]||r.knn[Object.keys(r.knn)[0]];
+    const blend1=recs.map((r,i)=>({x:t[i],y:blendRatio(r,cls,"h1",W)}));
+    const knn=recs.map((r,i)=>{let y=null;if(r.knn){const kk=r.knn["k15"]||r.knn[Object.keys(r.knn)[0]];
       if(kk){const v1=kk.v1_distance_weighted||{};const kn=v1[META.none_label]||0;
         y=Math.min((v1[cls]||0)/Math.max(kn,0.02),5);}}return {x:t[i],y};});
-    const mdl1=RECS.map((r,i)=>{const m=r.model_1h;const none=m[META.none_label].prob;
+    const mdl1=recs.map((r,i)=>{const m=r.model_1h;const none=m[META.none_label].prob;
       return {x:t[i],y:none>0?(m[cls]||{}).prob/none:null};});
     // BLENDED confidence ribbon = asymmetric [lowerBound, upperBound], skew-aware.
     //   modelDownConf = 1 - (prob-lo)/prob   (MC downside)  -> drives lower (lights use it)
@@ -68,7 +96,7 @@ function rebuildCharts(){
     // When hi is farther from the mean than lo, modelUpConf < modelDownConf, so the upper
     // gap exceeds the lower gap and the band leans up -> the MC skew is preserved.
     const ciHi=[], ciLo=[];
-    RECS.forEach((r,i)=>{
+    recs.forEach((r,i)=>{
       const m=r.model_1h, none=m[META.none_label].prob, mc=m[cls]||{};
       const by=blendRatio(r,cls,"h1",W);
       if(by==null||none<=0){ciHi.push({x:t[i],y:null});ciLo.push({x:t[i],y:null});return;}
@@ -82,9 +110,9 @@ function rebuildCharts(){
       ciLo.push({x:t[i],y:by*downJoint});          // = blendLower (dotted line sits here)
       ciHi.push({x:t[i],y:by*(2-upJoint)});        // mirror of the up-gap, above center
     });
-    const lower1=RECS.map((r,i)=>({x:t[i],y:blendLower(r,cls,"h1",W)}));
+    const lower1=recs.map((r,i)=>({x:t[i],y:blendLower(r,cls,"h1",W)}));
     const ranges=[];
-    RECS.forEach((r,i)=>{(r.active_warnings||[]).forEach(w=>{
+    recs.forEach((r,i)=>{(r.active_warnings||[]).forEach(w=>{
       if((w.classes||[]).includes(cls)) ranges.push({start:t[i]-18e5,end:t[i]+18e5,color:"rgba("+hexrgb(hue)+",0.18)"});});});
     // per-chart y-axis cap: 3x by default, auto-extend toward 5x only when this class's
     // data (or a threshold) actually exceeds 3x -> calm classes stay readable, spiky ones
@@ -94,6 +122,7 @@ function rebuildCharts(){
     if(tcls) ["h1","h24"].forEach(h=>["watch","advisory","warn"].forEach(k=>{const v=tcls[h]&&tcls[h][k]; if(v!=null&&v>dmax)dmax=v;}));
     const ymax = dmax>YMAX_BASE ? YMAX_CAP : YMAX_BASE;
     const card=document.createElement("div");card.className="card chartcard";card.dataset.cls=cls;card.dataset.ymax=ymax;
+    card.style.setProperty("--thumb", hue);   // slider triangle matches this class's line color
     card.innerHTML=`<h3><span class="dot" style="background:${hue}"></span>${cls}
       <span class="legend">solid = blended · thick dotted = lower bound (warning) · ribbon = CI · faint = model / KNN · shaded = NWS warning · dashed = threshold</span></h3>
       <div class="chartrow">
@@ -120,12 +149,12 @@ function rebuildCharts(){
         lineCfg("model1h",mdl1,hue,[5,3],1,0.35),
         lineCfg("knn15",knn,hue,[1,3],1,0.5)]},
       options:{responsive:true,maintainAspectRatio:false,animation:false,spanGaps:true,
-        scales:{x:{type:"linear",ticks:{color:"#5a6675",font:{size:10},maxTicksLimit:8,callback:xtick},grid:{color:"rgba(38,50,65,.4)"}},
+        scales:{x:{type:"linear",min:(windowSpan()?windowSpan().min:undefined),max:(windowSpan()?windowSpan().max:undefined),ticks:{color:"#5a6675",font:{size:10},maxTicksLimit:8,callback:xtick},grid:{color:"rgba(38,50,65,.4)"}},
           y:{min:0,max:ymax,ticks:{color:"#5a6675",font:{size:10},callback:v=>v+"x"},grid:{color:"rgba(38,50,65,.4)"}}},
         plugins:{legend:{display:false},bands:{ranges},thresh:{value:null},
           tooltip:{enabled:true,filter:it=>it.dataset.label==="blended",callbacks:{
             title:it=>xtick(it[0].parsed.x),
-            afterBody:it=>{const i=it[0].dataIndex,r=RECS[i],m=r.model_1h;
+            afterBody:it=>{const i=it[0].dataIndex,r=recs[i],m=r.model_1h;
               const none=m[META.none_label].prob, ci=none>0?(((m[cls]||{}).hi-(m[cls]||{}).lo)/2/none):null;
               let kc=null; if(r.knn){const kk=r.knn["k15"]||r.knn[Object.keys(r.knn)[0]]; if(kk)kc=kk.v1_confidence;}
               return "model CI ±"+(ci!=null?ci.toFixed(2):"—")+"x · knn conf "+(kc!=null?kc.toFixed(2):"—");}}}}}});
@@ -225,6 +254,45 @@ function applyAllThreshLines(){
   });
 }
 
+// ---- week-window controls -----------------------------------------------
+// The slider indexes "week ending at record i". Sliding left walks the window
+// back through history one record-step at a time; "latest" snaps to the newest.
+// Rebuilding charts is cheap here (same path as a location switch), and pinning
+// the x-axis makes the chosen week fill the width.
+function wireWindow(){
+  const bar=document.getElementById("winbar");
+  const bAll=document.getElementById("win-all"), bWeek=document.getElementById("win-week");
+  const ctrls=document.getElementById("win-ctrls"), slider=document.getElementById("win-slider");
+  const label=document.getElementById("win-label"), bLatest=document.getElementById("win-latest");
+  if(!bar) return;
+  bar.style.display = RECS.length ? "flex" : "none";
+
+  function fmtRange(end){
+    const s=new Date(end-WEEK_MS), e=new Date(end);
+    const d=t=>(t.getUTCMonth()+1)+"/"+t.getUTCDate();
+    return d(s)+" → "+d(e)+" (week ending "+xtick(end)+")";
+  }
+  function refreshLabel(){
+    label.textContent = VIEW.mode==="week" && VIEW.end!=null ? fmtRange(VIEW.end) : "";
+  }
+  function setMode(mode){
+    VIEW.mode=mode;
+    bAll.classList.toggle("on", mode==="all");
+    bWeek.classList.toggle("on", mode==="week");
+    ctrls.style.display = mode==="week" ? "flex" : "none";
+    if(mode==="week"){
+      slider.min=0; slider.max=Math.max(0,RECS.length-1);
+      if(VIEW.end==null) slider.value=slider.max;         // default: newest week
+      VIEW.end = recTs(RECS[Math.round(+slider.value)]);
+    }
+    refreshLabel(); rebuildCharts();
+  }
+  bAll.onclick   = ()=>setMode("all");
+  bWeek.onclick  = ()=>setMode("week");
+  bLatest.onclick= ()=>{ slider.value=slider.max; VIEW.end=recTs(RECS[RECS.length-1]); refreshLabel(); rebuildCharts(); };
+  slider.oninput = ()=>{ VIEW.end=recTs(RECS[Math.round(+slider.value)]); refreshLabel(); rebuildCharts(); };
+}
+
 async function load(key){
   await getMeta();
   RECS=await(await fetch("/api/history?loc="+encodeURIComponent(key))).json();
@@ -237,7 +305,9 @@ async function load(key){
      <div><span class="k">span</span>${utc(RECS[0].data_latest_utc)} → ${utc(last.data_latest_utc)}</div>
      <div><span class="k">blend</span>${(META.blend_knn_weight*100).toFixed(0)}% KNN</div>`;
   // populate class dropdown
+  VIEW.mode="all"; VIEW.end=null;   // reset window when (re)loading a location
   rebuildCharts();
+  wireWindow();
 }
 
 (async()=>{ const cur=await mountLocations(load); if(cur)load(cur); })();

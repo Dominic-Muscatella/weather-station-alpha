@@ -35,7 +35,7 @@ This project has 4 main basic parts:
 * 1: Logging the sensor data from the USB barometer, and the remote sensors, writing them to csv
 
 * 2: A pair of machine learning model ensembles trained on historical  weather, watch, and warning data. One trained to look 1h into the future, the other trained to look 24h ahead into the future. Both feature a KNN component, for real-time learning without retraining the underlying neural net.
-These models are run against the locally gathered data once every 30 minutes. 
+These models are run against the locally gathered data once every 15 minutes. 
 
 * 3: A web server and UI for adjusting warning thresholds, administering the sample for real time learning, viewing the collected data, and viewing the output of the severe weather models
 
@@ -283,10 +283,15 @@ The Light Manager service will operate the ws2812b chip. it will play a startup 
 
 During operation, it will show different animations for the following cases:
 all clear (no watches or warnings)
+<img src="./images/clear_light.gif" width="200px" style="border-radius: 15px;" alt="local sensor data log">
 watch (one or more watches active)
+<img src="./images/watch_light.gif" width="200px" style="border-radius: 15px;" alt="local sensor data log">
 advisory (one or more advisories active)
+<img src="./images/advisory_light.gif" width="200px" style="border-radius: 15px;" alt="local sensor data log">
 warning (one or more warnings active)
+<img src="./images/warning_light.gif" width="200px" style="border-radius: 15px;" alt="local sensor data log">
 compute (cpu compute is over 30%)
+<img src="./images/compute_running_light.gif" width="200px" style="border-radius: 15px;" alt="local sensor data log">
 
 It will also 'blink':
 once (when recieving data from sensor 1)
