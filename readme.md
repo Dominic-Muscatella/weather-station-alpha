@@ -282,16 +282,21 @@ The Weather Engine service runs the machine learning models on the local data ev
 The Light Manager service will operate the ws2812b chip. it will play a startup animation, and a shut down animation. 
 
 During operation, it will show different animations for the following cases:
+<br>
 all clear (no watches or warnings)
 <img src="./images/clear_light.gif" width="200px" style="border-radius: 15px;" alt="local sensor data log">
+<br>
 watch (one or more watches active)
 <img src="./images/watch_light.gif" width="200px" style="border-radius: 15px;" alt="local sensor data log">
+<br>
 advisory (one or more advisories active)
 <img src="./images/advisory_light.gif" width="200px" style="border-radius: 15px;" alt="local sensor data log">
+<br>
 warning (one or more warnings active)
-<img src="./images/warning_light.gif" width="200px" style="border-radius: 15px;" alt="local sensor data log">
+<img src="./images/warning_light.gif" width="200px" style="border-radius: 15px;" alt="local sensor data log"><br>
 compute (cpu compute is over 30%)
 <img src="./images/compute_running_light.gif" width="200px" style="border-radius: 15px;" alt="local sensor data log">
+<br>
 
 It will also 'blink':
 once (when recieving data from sensor 1)
