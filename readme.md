@@ -1,6 +1,6 @@
 # Weather Station Alpha
 ## Severe Weather Prediction Using Local Data
-<img src="./images/weather_Station_beauty_shot.png" alt="Project Beauty Shot" width="840px" style="border-radius: 15px;">
+<img src="./images/weather_station_beauty_shot.png" alt="Project Beauty Shot" width="840px" style="border-radius: 15px;">
 <br>
 <div class="image-row" style="display: flex; gap: 10px;font-size:75%">
 <div>
