@@ -261,7 +261,6 @@ sudo systemctl stop light_manager.service
 sudo systemctl stop cooling_manager.service
 ```
 and to restart them instead of stopping them completely:
-to stop the services (only on an error):
 ```bash
 sudo systemctl restart weather-sensors.service
 sudo systemctl restart weather-engine.service
