@@ -276,7 +276,7 @@ The functions are broken into 5 services, which systemctl manages: the Weather S
 
 The Weather Sensors service gathers temperature and humidity from our outside sensors from over the radio, as well as gathering the local pressure from an on-board barometer. It saves this data every 5 minutes.
 
-The Weather Engine service runs the machine learning models on the local data every hour, and the Weather UI service hosts the API and front end for the data UI.
+The Weather Engine service runs the machine learning models on the local data every 15 minutes, and the Weather UI service hosts the API and front end for the data UI.
 
 The Light Manager service will operate the ws2812b chip. it will play a startup animation, and a shut down animation. 
 
