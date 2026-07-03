@@ -298,16 +298,22 @@ compute (cpu compute is over 30%)<br>
 <br>
 
 It will also 'blink':
+
 once (when recieving data from sensor 1)
+
 twice (when recieving data from sensor 2)
+
 5 times (when saving sensor data to the csv)
 
 25 times, quickly (when the ml models have started, and completed)
 
 
 The Cooling Manager service will operate the cooling fans in 3 modes, based on cpu usage:
+
 default      -  low  (fan1 @ 3.3v, fan2 off)
+
 cpu over 75% -  med  (fan1 @ 3.3v, fan2 @ 5v)
+
 cpu over 92% -  high (fan1 @ 5v, fan2 @ 5v)
 
 
