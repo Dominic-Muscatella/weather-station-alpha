@@ -2,30 +2,6 @@
 ## Severe Weather Prediction Using Local Data
 <img src="./images/new_shot.jpg" alt="Project Beauty Shot" width="840px" style="border-radius: 15px;">
 <br>
-<div class="image-row" style="display: flex; gap: 10px;font-size:75%">
-<div>
-  <img src="./images/summary page.jpg" width="200px" style="border-radius: 15px;" alt="summary page">
-  <br>
-Current Severe Weather Predictions <br>Overview Page
-  </div>
-  <div>
-  <img src="./images/model_performance.jpg" width="200px" style="border-radius: 15px;" alt="model performance: prediction log vs real local watches and warnings">
-  <br>
-  Historical Prediction Accuracy <br> Vs Real Warnings Compare Page
-  </div>
-  <div>
-  <img src="./images/data_log.jpg" width="200px" style="border-radius: 15px;" alt="local sensor data log">
-  <br>
-  Local Sensor Data <br> Historical Log Page
-  </div>
-  <div>
-  <img src="./images/knn_admin.jpg" width="200px" style="border-radius: 15px;" alt="Admin for real-time learning">
-  <br>
-  Admin Panel for Real-Time <br> Learning Sample Selection
-  </div>
-</div>
-<br>
-
 
 
 ### Overview
@@ -277,6 +253,32 @@ The functions are broken into 5 services, which systemctl manages: the Weather S
 The Weather Sensors service gathers temperature and humidity from our outside sensors from over the radio, as well as gathering the local pressure from an on-board barometer. It saves this data every 5 minutes.
 
 The Weather Engine service runs the machine learning models on the local data every 15 minutes, and the Weather UI service hosts the API and front end for the data UI.
+
+<div class="image-row" style="display: flex; gap: 10px;font-size:75%">
+<div>
+  <img src="./images/summary page.jpg" width="200px" style="border-radius: 15px;" alt="summary page">
+  <br>
+Current Severe Weather Predictions <br>Overview Page
+  </div>
+  <div>
+  <img src="./images/model_performance.jpg" width="200px" style="border-radius: 15px;" alt="model performance: prediction log vs real local watches and warnings">
+  <br>
+  Historical Prediction Accuracy <br> Vs Real Warnings Compare Page
+  </div>
+  <div>
+  <img src="./images/data_log.jpg" width="200px" style="border-radius: 15px;" alt="local sensor data log">
+  <br>
+  Local Sensor Data <br> Historical Log Page
+  </div>
+  <div>
+  <img src="./images/knn_admin.jpg" width="200px" style="border-radius: 15px;" alt="Admin for real-time learning">
+  <br>
+  Admin Panel for Real-Time <br> Learning Sample Selection
+  </div>
+</div>
+<br>
+
+
 
 The Light Manager service will operate the ws2812b chip. it will play a startup animation, and a shut down animation. 
 
