@@ -250,7 +250,7 @@ The Raspberry Pi Runs Ubuntu Server.
 
 The functions are broken into 5 services, which systemctl manages: the Weather Sensors service, the Weather Engine service, the Weather UI service, the Light Manager service, and the Cooling Manager service.
 
-The Weather Sensors service gathers temperature and humidity from our outside sensors from over the radio, as well as gathering the local pressure from an on-board barometer. It saves this data every 5 minutes.
+The Weather Sensors service gathers temperature and humidity from our outside sensors from over the radio at 433mHz, as well as gathering the local pressure from an on-board barometer. It saves this data every 5 minutes.
 
 The Weather Engine service runs the machine learning models on the local data every 15 minutes, and the Weather UI service hosts the API and front end for the data UI.
 
