@@ -479,11 +479,13 @@ This is the tuning page, and it is where most of the real work happens. Each cla
 
 Clicking a chart opens a threshold tuner beneath it. You pick a horizon and a tier, drag a vertical slider, and the threshold line projects live onto the chart while it saves. Because the chart shows the model's history against the real warnings, you can slide the threshold until the tiers line up with what actually happened, which is the whole point.
 
-The page also has an "all history" / "1-week window" toggle with a slider that walks a seven-day frame back through the entire history. Because the models take in the last seven days of hourly data and the last 48 hours of five-minute data, sliding that window to any past moment shows you exactly the slice of data the model saw when it ran at that time. It doubles as a way to replay the model's-eye view of any past event.
+The page also has an "all history" / "1-week window" toggle with a slider that walks a seven-day frame back through the entire history. 
 
 #### Inputs
 
 The raw sensor log: temperature, pressure, and humidity over time, straight from the csv the sensor service writes. Hovering a point draws the same forward projection the Monte Carlo uses, out to t+1h, so you can see the trend the simulation would extrapolate from any point. This page has the same one-week sliding window as the performance page.
+
+Because the models take in the last seven days of hourly data and the last 48 hours of five-minute data, sliding that window to any past moment shows you exactly the slice of data the model saw when it ran at that time. It doubles as a way to replay the model's-eye view of any past event.
 
 #### Admin
 
